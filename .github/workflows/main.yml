@@ -1,0 +1,44 @@
+name: AdaGPT
+
+# Trigger the workflow on issue comments
+on:
+  issue_comment:
+    types: [created]
+
+# Allows the workflow to create comments on issues and pull requests
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  # This job only runs for pull request comments  
+  pr_commented:
+    name: PR comment
+    # Only run the job if the comment contains @AdaGPT
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+      # Replace ./ with zirkelc/adapt@v1 to use the action
+      - uses: ./  
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Reference secrets from the repository settings/secrets/actions
+          openai_key: ${{ secrets.OPENAI_KEY }}
+          issue_number: ${{ github.event.issue.number }}
+
+  # This job only runs for issue comments
+  issue_commented:
+    name: Issue comment
+    # Only run the job if the comment contains @AdaGPT
+    if: ${{ !github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+      # Replace ./ with zirkelc/adapt@v1 to use the action
+      - uses: ./
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Reference secrets from the repository settings/secrets/actions
+          openai_key: ${{ secrets.OPENAI_KEY }}
+          issue_number: ${{ github.event.issue.number }}

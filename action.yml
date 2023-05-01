@@ -1,0 +1,35 @@
+name: 'AdaGPT GitHub Action'
+description: 'AI support for Issues and Pull Requests right at your fingertips'
+author: '@zirkelc'
+
+branding:
+  icon: 'feather'
+  color: 'purple'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+  issue_number:
+    description: 'Issue Number'
+    required: true
+  openai_key: 
+    # https://platform.openai.com/account/api-keys
+    description: 'OpenAI API Key'
+    required: true
+  openai_temperature:
+    # https://platform.openai.com/docs/api-reference/chat/create#completions/create-temperature
+    description: 'OpenAI Temperature'
+    required: false
+  openai_top_p:
+    # https://platform.openai.com/docs/api-reference/chat/create#completions/create-top_p
+    description: 'OpenAI Top P'
+    required: false
+  openai_max_tokens:
+  # https://platform.openai.com/docs/api-reference/chat/create#completions/create-max_tokens
+    description: 'OpenAI Max Tokens'
+    required: false
+
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

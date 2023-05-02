@@ -59,6 +59,7 @@ Sensitive information, such as the OpenAI API key, should be stored as [encrypte
 Add your OpenAI API key as a secret to your repository and reference it using the `${{ secrets.OPENAI_KEY }}` syntax.
 
 ## Action Inputs
+
 | Name                 | Required | Default | Description                                                                                                                                                                                                                                                                                                               |
 | -------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github_token`       | Yes      |         | The access token used to retrieve and create comments on the issues and pull requests. This will typically be your GitHub token. If so, use `${{ secrets.GITHUB_TOKEN }}`                                                                                                                                                 |
@@ -69,8 +70,12 @@ Add your OpenAI API key as a secret to your repository and reference it using th
 | `openai_max_tokens`  | No       | 4096    | The maximum number of tokens to generate in the completion. See [API reference](https://platform.openai.com/docs/api-reference/chat/create#completions/create-max_tokens) for more information.                                                                                                                           |
 
 # Examples
-![2023-05-02_09-18-31](https://user-images.githubusercontent.com/950244/235603793-35506f28-e64a-440c-b918-da7edc3f6d7f.jpg)
 
+### [Explain Pull Requests](https://github.com/zirkelc/AdaGPT/pull/1)
+![image](https://user-images.githubusercontent.com/950244/235635340-86ebabad-52fa-4a65-89b9-16e2524638cc.png)
+---
+### [Rock, Paper, Scissors!](https://github.com/zirkelc/AdaGPT/issues/8)
+![image](https://user-images.githubusercontent.com/950244/235635443-09c893d6-c040-406d-93e6-49752c46b4aa.png)
 
 # Contributing
 We welcome bug reports, feature requests, and contributions to AdaGPT! If you'd like to contribute, please open an issue or pull request on this repository.

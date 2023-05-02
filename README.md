@@ -15,7 +15,7 @@ To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your wo
 
 ### Workflow
 ```yaml
-# file: .github/workflows/adagpt.yml
+# File: .github/workflows/adagpt.yml
 name: 'AdaGPT'
 
 # Execute the workflow on new issue comments

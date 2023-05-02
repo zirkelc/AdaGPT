@@ -77,24 +77,26 @@ const initPullRequest = (repository: Repository, issue: Issue, diff: string): Ch
 const initPreviousComments = (issue: Issue, comments: IssueComment[]): ChatCompletionRequestMessage[] => {
   const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
 
-  return [
-    {
-      role: ChatCompletionRequestMessageRoleEnum.System,
-      content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
-    },
-    ...comments.map((comment) =>
-      isCommentByAssistant(comment.body)
-        ? {
-            role: ChatCompletionRequestMessageRoleEnum.Assistant,
-            content: unescapeComment(comment.body),
-          }
-        : {
-            role: ChatCompletionRequestMessageRoleEnum.User,
-            name: escapeUser(comment.user.login),
-            content: unescapeComment(comment.body),
-          },
-    ),
-  ];
+  return comments.length === 0
+    ? []
+    : [
+        {
+          role: ChatCompletionRequestMessageRoleEnum.System,
+          content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
+        },
+        ...comments.map((comment) =>
+          isCommentByAssistant(comment.body)
+            ? {
+                role: ChatCompletionRequestMessageRoleEnum.Assistant,
+                content: unescapeComment(comment.body),
+              }
+            : {
+                role: ChatCompletionRequestMessageRoleEnum.User,
+                name: escapeUser(comment.user.login),
+                content: unescapeComment(comment.body),
+              },
+        ),
+      ];
 };
 
 const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
@@ -192,7 +194,7 @@ export async function generateCompletion(
     });
 
     core.debug('Completion');
-    core.debug(JSON.stringify(completion, null, 2));
+    core.debug(JSON.stringify(completion.data, null, 2));
 
     if (!completion.data.choices[0].message?.content || completion.data.choices[0].finish_reason !== 'stop') {
       // https://platform.openai.com/docs/guides/chat/response-format

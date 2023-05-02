@@ -18,7 +18,7 @@ To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your wo
 # File: .github/workflows/adagpt.yml
 name: 'AdaGPT'
 
-# Execute the workflow on new issue comments
+# Run the workflow on new issue comments
 on:
   issue_comment:
     types: [created]
@@ -41,7 +41,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_key: ${{ secrets.OPENAI_KEY }}
-          issue_number: ${{ github.event.issue.number }}
 ```
 
 Check out [`main.yml`](./.github/workflows/main.yml) for a working demo.
@@ -63,7 +62,6 @@ Add your OpenAI API key as a secret to your repository and reference it using th
 | Name                 | Required | Default | Description                                                                                                                                                                                                                                                                                                               |
 | -------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github_token`       | Yes      |         | The access token used to retrieve and create comments on the issues and pull requests. This will typically be your GitHub token. If so, use `${{ secrets.GITHUB_TOKEN }}`                                                                                                                                                 |
-| `issue_number`       | Yes      |         | The number of the issue or pull request. If the workflow was triggered on the `issue_comment` event, use `${{ github.event.issue.number }}`                                                                                                                                                                               |
 | `openai_key`         | Yes      |         | The API key used for OpenAI chat completion request. Go to [OpenAI](https://platform.openai.com/account/api-keys) to create a new API key                                                                                                                                                                                 |
 | `openai_temperature` | No       | 0.8     | What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. See [API reference](https://platform.openai.com/docs/api-reference/chat/create#completions/create-temperature) for more information. |     |     |     |     |     |     
 | `openai_top_p`       | No       | 0       | An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. See [API reference](https://platform.openai.com/docs/api-reference/chat/create#completions/create-top_p) for more information.                                     |

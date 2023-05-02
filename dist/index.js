@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addComment = exports.listComments = void 0;
+exports.addComment = exports.listPreviousComments = exports.listComments = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 /**
  * Returns all comments on an issue or pull request.
@@ -62,6 +62,12 @@ function listComments(github_token, issue_number) {
     });
 }
 exports.listComments = listComments;
+const listPreviousComments = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const comments = yield listComments(github_token, issue_number);
+    const index = comments.findIndex((comment) => comment.id === comment_id);
+    return comments.slice(0, index);
+});
+exports.listPreviousComments = listPreviousComments;
 /**
  * Adds a comment to an issue or pull request.
  * @param github_token
@@ -192,23 +198,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.writeSummary = exports.getRepo = exports.isPullRequest = exports.isIssue = exports.isIssueCommentWith = void 0;
+exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.isEventWith = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 /**
- * Returns true if the event originated from an issue comment and the comment contains the search string.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
+ * Returns true if the event originated from an issue event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
  * @param context
  * @returns
  */
-const isIssueCommentWith = (context, search) => {
-    var _a;
-    if (context.eventName === 'issue_comment') {
-        return (_a = context.payload.comment) === null || _a === void 0 ? void 0 : _a.body.toLowerCase().includes(search.toLowerCase());
-    }
-    return false;
+const isIssueEvent = (context) => {
+    return context.eventName === 'issues';
 };
-exports.isIssueCommentWith = isIssueCommentWith;
+exports.isIssueEvent = isIssueEvent;
+/**
+ * Returns true if the event originated from a pull request event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+ * @param context
+ * @returns
+ */
+const isPullRequestEvent = (context) => {
+    return context.eventName === 'pull_request';
+};
+exports.isPullRequestEvent = isPullRequestEvent;
 /**
  * Returns true if the event originated from an issue comment.
  * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
@@ -216,11 +227,11 @@ exports.isIssueCommentWith = isIssueCommentWith;
  * @param context
  * @returns
  */
-const isIssue = (context) => {
+const isIssueCommentEvent = (context) => {
     var _a;
-    return ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) === undefined;
+    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) === undefined;
 };
-exports.isIssue = isIssue;
+exports.isIssueCommentEvent = isIssueCommentEvent;
 /**
  * Returns true if the event originated from a pull request comment.
  * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
@@ -228,11 +239,56 @@ exports.isIssue = isIssue;
  * @param context
  * @returns
  */
-const isPullRequest = (context) => {
+const isPullRequestCommentEvent = (context) => {
     var _a;
-    return ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) !== undefined;
+    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) !== undefined;
 };
-exports.isPullRequest = isPullRequest;
+exports.isPullRequestCommentEvent = isPullRequestCommentEvent;
+/**
+ * Returns true if the event paylod contains the search string.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+ * @param context
+ * @returns
+ */
+const isEventWith = (context, search) => {
+    if ((0, exports.isIssueEvent)(context)) {
+        const payload = context.payload;
+        return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+    }
+    if ((0, exports.isPullRequestEvent)(context)) {
+        const payload = context.payload;
+        return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+    }
+    if ((0, exports.isIssueCommentEvent)(context) || (0, exports.isPullRequestCommentEvent)(context)) {
+        const payload = context.payload;
+        return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+    }
+    return false;
+};
+exports.isEventWith = isEventWith;
+/**
+ * Returns the issue number from the event payload.
+ * Throws an error if the event is not an issue, pull request, or comment.
+ * @param context
+ * @returns
+ */
+const getIssueNumber = (context) => {
+    if ((0, exports.isIssueEvent)(context)) {
+        const payload = context.payload;
+        return payload.issue.number;
+    }
+    if ((0, exports.isPullRequestEvent)(context)) {
+        const payload = context.payload;
+        return payload.pull_request.number;
+    }
+    if ((0, exports.isIssueCommentEvent)(context) || (0, exports.isPullRequestCommentEvent)(context)) {
+        const payload = context.payload;
+        return payload.issue.number;
+    }
+    throw new Error(`Could not determine issue number from event "${context.eventName}"`);
+};
+exports.getIssueNumber = getIssueNumber;
 /**
  * Returns the owner and name of the repository.
  * @returns
@@ -322,7 +378,6 @@ const ASSISTANT_HANDLE = '@AdaGPT';
  */
 const getInputs = () => ({
     github_token: core.getInput('github_token', { required: true }),
-    issue_number: parseInt(core.getInput('issue_number', { required: true })),
     openai_key: core.getInput('openai_key', { required: true }),
     openai_temperature: parseFloat(core.getInput('openai_temperature')),
     openai_top_p: parseFloat(core.getInput('openai_top_p')),
@@ -333,25 +388,23 @@ function run() {
         try {
             core.debug('Context');
             core.debug(JSON.stringify(github.context));
-            if (!(0, utils_1.isIssueCommentWith)(github.context, ASSISTANT_HANDLE)) {
-                core.debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
+            if (!(0, utils_1.isEventWith)(github.context, ASSISTANT_HANDLE)) {
+                core.debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
                 return;
             }
+            const issueNumber = (0, utils_1.getIssueNumber)(github.context);
+            core.debug(`IssueNumber: ${issueNumber}`);
             const inputs = getInputs();
-            const { github_token, issue_number, openai_key, openai_temperature, openai_top_p, openai_max_tokens } = inputs;
             core.debug('Inputs');
             core.debug(JSON.stringify(inputs));
             const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
             const { issue, comment: requestComment, repository } = github.context.payload;
-            const comments = yield (0, comment_1.listComments)(github_token, issue_number);
-            // filter out comments that were made after the request comment
-            // TODO can we use the id instead?
-            const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
+            const previousComments = yield (0, comment_1.listPreviousComments)(inputs.github_token, issueNumber, requestComment.id);
             core.debug('Comments');
             core.debug(JSON.stringify(previousComments));
             const prompt = [];
-            if ((0, utils_1.isPullRequest)(github.context)) {
-                const diff = yield (0, pulls_1.getPullRequestDiff)(github_token, issue_number);
+            if ((0, utils_1.isPullRequestCommentEvent)(github.context)) {
+                const diff = yield (0, pulls_1.getPullRequestDiff)(inputs.github_token, issueNumber);
                 core.debug('Diff');
                 core.debug(diff);
                 prompt.push(...(0, openai_1.generatePullRequestPrompt)({
@@ -363,7 +416,7 @@ function run() {
                     diff,
                 }));
             }
-            else {
+            else if ((0, utils_1.isIssueCommentEvent)(github.context)) {
                 prompt.push(...(0, openai_1.generateIssuePrompt)({
                     assistant,
                     repository,
@@ -372,17 +425,21 @@ function run() {
                     previousComments,
                 }));
             }
+            else {
+                core.debug('Event is not an issue or pull request comment. Skipping...');
+                return;
+            }
             core.debug('Prompt');
             core.debug(JSON.stringify(prompt));
             if (prompt.length > 0) {
                 // TODO handle max tokens limit
-                const response = yield (0, openai_1.generateCompletion)(openai_key, {
+                const response = yield (0, openai_1.generateCompletion)(inputs.openai_key, {
                     messages: prompt,
-                    temperature: openai_temperature,
-                    top_p: openai_top_p,
-                    max_tokens: openai_max_tokens,
+                    temperature: inputs.openai_temperature,
+                    top_p: inputs.openai_top_p,
+                    max_tokens: inputs.openai_max_tokens,
                 });
-                const responseComment = yield (0, comment_1.addComment)(github_token, issue_number, response);
+                const responseComment = yield (0, comment_1.addComment)(inputs.github_token, issueNumber, response);
                 core.debug('ResponseComment');
                 core.debug(JSON.stringify(responseComment));
                 yield (0, utils_1.writeSummary)(github.context, issue, requestComment, responseComment);

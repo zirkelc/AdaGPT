@@ -26,7 +26,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Reference secrets from the repository settings/secrets/actions
           openai_key: ${{ secrets.OPENAI_KEY }}
-          issue_number: ${{ github.event.issue.number }}
 
   # This job only runs for issue comments
   issue_commented:
@@ -43,4 +42,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Reference secrets from the repository settings/secrets/actions
           openai_key: ${{ secrets.OPENAI_KEY }}
-          issue_number: ${{ github.event.issue.number }}

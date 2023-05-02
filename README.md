@@ -7,16 +7,15 @@ Simply mention [@AdaGPT](https://github.com/AdaGPT) in your comments on issues a
 Ada is named after [Ada Lovelace](https://en.wikipedia.org/wiki/Ada_Lovelace), a pioneer of computer programming and the first person to write an algorithm intended to be processed by a machine. Ada is considered the first computer programmer and a symbol of women's contributions to science and technology.
 
 ## Getting Started
-To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your repository. Here are the steps to get started:
+To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your workflow. Here are the steps to get started:
 
 1. Create an [OpenAI API key](https://platform.openai.com/account/api-keys) if you don't already have one. Keep in mind that you'll occur charges for using the API.
 2. Save your OpenAI API key as a [Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository.
-3. Create a workflow that will be executed for [comments on issues and pull requests](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment) events. See [Usage](#usage) for an example.
+3. Create a new workflow in folder `.github/workflows` that will be executed for [new comments](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment) on issues and pull requests.
 
-## Usage
-Create a workflow file (e.g. `.github/workflows/adagpt.yml`) that will be executed on `issue_comment` events.
-
+### Workflow
 ```yaml
+# file: .github/workflows/adagpt.yml
 name: 'AdaGPT'
 
 # Execute the workflow on new issue comments

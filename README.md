@@ -38,6 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3  
       - uses: zirkelc/adagpt@v1
+        name: AdaGPT
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_key: ${{ secrets.OPENAI_KEY }}

@@ -70,6 +70,8 @@ Add your OpenAI API key as a secret to your repository and reference it using th
 | `openai_max_tokens`  | No       | 4096    | The maximum number of tokens to generate in the completion. See [API reference](https://platform.openai.com/docs/api-reference/chat/create#completions/create-max_tokens) for more information.                                                                                                                           |
 
 # Examples
+![2023-05-02_09-18-31](https://user-images.githubusercontent.com/950244/235603793-35506f28-e64a-440c-b918-da7edc3f6d7f.jpg)
+
 
 # Contributing
 We welcome bug reports, feature requests, and contributions to AdaGPT! If you'd like to contribute, please open an issue or pull request on this repository.

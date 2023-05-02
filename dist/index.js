@@ -483,22 +483,24 @@ const initPullRequest = (repository, issue, diff) => {
 };
 const initPreviousComments = (issue, comments) => {
     const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
-    return [
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
-        },
-        ...comments.map((comment) => (0, utils_1.isCommentByAssistant)(comment.body)
-            ? {
-                role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
-                content: (0, utils_1.unescapeComment)(comment.body),
-            }
-            : {
-                role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
-                name: (0, utils_1.escapeUser)(comment.user.login),
-                content: (0, utils_1.unescapeComment)(comment.body),
-            }),
-    ];
+    return comments.length === 0
+        ? []
+        : [
+            {
+                role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+                content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
+            },
+            ...comments.map((comment) => (0, utils_1.isCommentByAssistant)(comment.body)
+                ? {
+                    role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
+                    content: (0, utils_1.unescapeComment)(comment.body),
+                }
+                : {
+                    role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
+                    name: (0, utils_1.escapeUser)(comment.user.login),
+                    content: (0, utils_1.unescapeComment)(comment.body),
+                }),
+        ];
 };
 const initRequestComment = (issue, comment) => {
     const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';

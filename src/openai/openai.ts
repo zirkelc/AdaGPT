@@ -77,24 +77,26 @@ const initPullRequest = (repository: Repository, issue: Issue, diff: string): Ch
 const initPreviousComments = (issue: Issue, comments: IssueComment[]): ChatCompletionRequestMessage[] => {
   const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
 
-  return [
-    {
-      role: ChatCompletionRequestMessageRoleEnum.System,
-      content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
-    },
-    ...comments.map((comment) =>
-      isCommentByAssistant(comment.body)
-        ? {
-            role: ChatCompletionRequestMessageRoleEnum.Assistant,
-            content: unescapeComment(comment.body),
-          }
-        : {
-            role: ChatCompletionRequestMessageRoleEnum.User,
-            name: escapeUser(comment.user.login),
-            content: unescapeComment(comment.body),
-          },
-    ),
-  ];
+  return comments.length === 0
+    ? []
+    : [
+        {
+          role: ChatCompletionRequestMessageRoleEnum.System,
+          content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
+        },
+        ...comments.map((comment) =>
+          isCommentByAssistant(comment.body)
+            ? {
+                role: ChatCompletionRequestMessageRoleEnum.Assistant,
+                content: unescapeComment(comment.body),
+              }
+            : {
+                role: ChatCompletionRequestMessageRoleEnum.User,
+                name: escapeUser(comment.user.login),
+                content: unescapeComment(comment.body),
+              },
+        ),
+      ];
 };
 
 const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {

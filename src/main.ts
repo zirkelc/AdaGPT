@@ -3,8 +3,8 @@ import * as github from '@actions/github';
 import { IssueCommentCreatedEvent } from '@octokit/webhooks-types';
 import { addComment, listComments } from './github/comment';
 import { getPullRequestDiff } from './github/pulls';
-import { isIssueCommentWith, isPullRequest, writeSummary } from './github/utils';
-import { generateCompletion, generateIssuePrompt, generatePullRequestPrompt } from './openai/openai';
+import { isEventWith, isPullRequestComment, writeSummary } from './github/utils';
+import { generateCompletion, generateIssueCommentPrompt, generatePullRequestCommentPrompt } from './openai/openai';
 
 /**
  * The name and handle of the assistant.
@@ -39,7 +39,7 @@ async function run(): Promise<void> {
     core.debug('Context');
     core.debug(JSON.stringify(github.context));
 
-    if (!isIssueCommentWith(github.context, ASSISTANT_HANDLE)) {
+    if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
       core.debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
       return;
     }
@@ -63,14 +63,14 @@ async function run(): Promise<void> {
 
     const prompt = [];
 
-    if (isPullRequest(github.context)) {
+    if (isPullRequestComment(github.context)) {
       const diff = await getPullRequestDiff(github_token, issue_number);
 
       core.debug('Diff');
       core.debug(diff);
 
       prompt.push(
-        ...generatePullRequestPrompt({
+        ...generatePullRequestCommentPrompt({
           assistant,
           repository,
           issue,
@@ -81,7 +81,7 @@ async function run(): Promise<void> {
       );
     } else {
       prompt.push(
-        ...generateIssuePrompt({
+        ...generateIssueCommentPrompt({
           assistant,
           repository,
           issue,

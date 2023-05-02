@@ -1,20 +1,57 @@
 import * as core from '@actions/core';
 import { Context } from '@actions/github/lib/context';
-import { Issue, IssueComment } from '@octokit/webhooks-types';
+import {
+  Issue,
+  IssueComment,
+  IssueCommentCreatedEvent,
+  IssuesOpenedEvent,
+  PullRequestOpenedEvent,
+} from '@octokit/webhooks-types';
 
 /**
- * Returns true if the event originated from an issue comment and the comment contains the search string.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
+ * Returns true if the event paylod contains the search string.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
  * @param context
  * @returns
  */
-export const isIssueCommentWith = (context: Context, search: string): boolean => {
+export const isEventWith = (context: Context, search: string): boolean => {
+  if (context.eventName === 'issues') {
+    const payload = context.payload as IssuesOpenedEvent;
+    return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+  }
+
+  if (context.eventName === 'pull_request') {
+    const payload = context.payload as PullRequestOpenedEvent;
+    return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+  }
+
   if (context.eventName === 'issue_comment') {
-    return context.payload.comment?.body.toLowerCase().includes(search.toLowerCase());
+    const payload = context.payload as IssueCommentCreatedEvent;
+    return payload.comment.body.toLowerCase().includes(search.toLowerCase());
   }
 
   return false;
+};
+
+/**
+ * Returns true if the event originated from an issue event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+ * @param context
+ * @returns
+ */
+export const isIssue = (context: Context): boolean => {
+  return context.eventName === 'issues';
+};
+
+/**
+ * Returns true if the event originated from a pull request event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+ * @param context
+ * @returns
+ */
+export const isPullRequest = (context: Context): boolean => {
+  return context.eventName === 'pull_request';
 };
 
 /**
@@ -24,8 +61,8 @@ export const isIssueCommentWith = (context: Context, search: string): boolean =>
  * @param context
  * @returns
  */
-export const isIssue = (context: Context): boolean => {
-  return context.payload.issue?.pull_request === undefined;
+export const isIssueComment = (context: Context): boolean => {
+  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request === undefined;
 };
 
 /**
@@ -35,8 +72,8 @@ export const isIssue = (context: Context): boolean => {
  * @param context
  * @returns
  */
-export const isPullRequest = (context: Context): boolean => {
-  return context.payload.issue?.pull_request !== undefined;
+export const isPullRequestComment = (context: Context): boolean => {
+  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request !== undefined;
 };
 
 export type Repo = { owner: string; name: string };

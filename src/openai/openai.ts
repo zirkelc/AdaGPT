@@ -118,7 +118,7 @@ const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletion
 };
 
 /**
- * Generates an issue prompt for the OpenAI API.
+ * Generates an issue comment prompt for the OpenAI API.
  * @param input
  * @returns
  */
@@ -134,11 +134,27 @@ export const generateIssuePrompt = (input: IssuePromptInput): ChatCompletionRequ
 };
 
 /**
- * Generates a pull request prompt for the OpenAI API.
+ * Generates an issue comment prompt for the OpenAI API.
  * @param input
  * @returns
  */
-export const generatePullRequestPrompt = (input: PullRequestPromptInput): ChatCompletionRequestMessage[] => {
+export const generateIssueCommentPrompt = (input: IssuePromptInput): ChatCompletionRequestMessage[] => {
+  const { assistant, repository, issue, requestComment, previousComments } = input;
+
+  return [
+    ...initAssistant(assistant),
+    ...initIssue(repository, issue),
+    ...initPreviousComments(issue, previousComments),
+    ...initRequestComment(issue, requestComment),
+  ];
+};
+
+/**
+ * Generates a pull request comment prompt for the OpenAI API.
+ * @param input
+ * @returns
+ */
+export const generatePullRequestCommentPrompt = (input: PullRequestPromptInput): ChatCompletionRequestMessage[] => {
   const { assistant, repository, issue, requestComment, previousComments, diff } = input;
 
   return [

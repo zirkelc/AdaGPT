@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addComment = exports.listComments = void 0;
+exports.addComment = exports.listCommentsBefore = exports.listComments = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 /**
  * Returns all comments on an issue or pull request.
@@ -47,21 +47,25 @@ const github = __importStar(__nccwpck_require__(5438));
  * @param issue_number
  * @returns
  */
-function listComments(github_token, issue_number) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { owner, repo } = github.context.repo;
-        const octokit = github.getOctokit(github_token);
-        // pagination: https://github.com/octokit/octokit.js#pagination
-        const comments = yield octokit.paginate(octokit.rest.issues.listComments, {
-            owner,
-            repo,
-            issue_number,
-            per_page: 100,
-        });
-        return comments;
+const listComments = (github_token, issue_number) => __awaiter(void 0, void 0, void 0, function* () {
+    const { owner, repo } = github.context.repo;
+    const octokit = github.getOctokit(github_token);
+    // pagination: https://github.com/octokit/octokit.js#pagination
+    const comments = yield octokit.paginate(octokit.rest.issues.listComments, {
+        owner,
+        repo,
+        issue_number,
+        per_page: 100,
     });
-}
+    return comments;
+});
 exports.listComments = listComments;
+const listCommentsBefore = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const comments = yield (0, exports.listComments)(github_token, issue_number);
+    const index = comments.findIndex((c) => c.id === comment_id);
+    return comments.slice(0, index);
+});
+exports.listCommentsBefore = listCommentsBefore;
 /**
  * Adds a comment to an issue or pull request.
  * @param github_token
@@ -69,20 +73,73 @@ exports.listComments = listComments;
  * @param body
  * @returns
  */
-function addComment(github_token, issue_number, body) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { owner, repo } = github.context.repo;
-        const octokit = github.getOctokit(github_token);
-        const comment = yield octokit.rest.issues.createComment({
-            owner,
-            repo,
-            issue_number,
-            body,
-        });
-        return comment.data;
+const addComment = (github_token, issue_number, body) => __awaiter(void 0, void 0, void 0, function* () {
+    const { owner, repo } = github.context.repo;
+    const octokit = github.getOctokit(github_token);
+    const comment = yield octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number,
+        body,
     });
-}
+    return comment.data;
+});
 exports.addComment = addComment;
+
+
+/***/ }),
+
+/***/ 2699:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getIssue = void 0;
+const github = __importStar(__nccwpck_require__(5438));
+const getIssue = (github_token, issue_number) => __awaiter(void 0, void 0, void 0, function* () {
+    const { owner, repo } = github.context.repo;
+    const octokit = github.getOctokit(github_token);
+    const { data: issue } = yield octokit.rest.issues.get({
+        owner,
+        repo,
+        issue_number,
+    });
+    return issue;
+});
+exports.getIssue = getIssue;
 
 
 /***/ }),
@@ -192,8 +249,52 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.writeSummary = exports.getRepo = exports.isPullRequestComment = exports.isIssueComment = exports.isPullRequest = exports.isIssue = exports.isEventWith = void 0;
+exports.debug = exports.writeContext = exports.writeResponse = exports.writeRequest = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.isEventWith = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+/**
+ * Returns true if the event originated from an issue event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+ * @param context
+ * @returns
+ */
+const isIssueEvent = (context) => {
+    return context.eventName === 'issues';
+};
+exports.isIssueEvent = isIssueEvent;
+/**
+ * Returns true if the event originated from a pull request event.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+ * @param context
+ * @returns
+ */
+const isPullRequestEvent = (context) => {
+    return context.eventName === 'pull_request';
+};
+exports.isPullRequestEvent = isPullRequestEvent;
+/**
+ * Returns true if the event originated from an issue comment.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
+ * @param context
+ * @returns
+ */
+const isIssueCommentEvent = (context) => {
+    var _a;
+    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) === undefined;
+};
+exports.isIssueCommentEvent = isIssueCommentEvent;
+/**
+ * Returns true if the event originated from a pull request comment.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
+ * @param context
+ * @returns
+ */
+const isPullRequestCommentEvent = (context) => {
+    var _a;
+    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) !== undefined;
+};
+exports.isPullRequestCommentEvent = isPullRequestCommentEvent;
 /**
  * Returns true if the event paylod contains the search string.
  * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
@@ -202,15 +303,15 @@ const core = __importStar(__nccwpck_require__(2186));
  * @returns
  */
 const isEventWith = (context, search) => {
-    if (context.eventName === 'issues') {
+    if ((0, exports.isIssueEvent)(context)) {
         const payload = context.payload;
         return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
     }
-    if (context.eventName === 'pull_request') {
+    if ((0, exports.isPullRequestEvent)(context)) {
         const payload = context.payload;
         return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
     }
-    if (context.eventName === 'issue_comment') {
+    if ((0, exports.isIssueCommentEvent)(context) || (0, exports.isPullRequestCommentEvent)(context)) {
         const payload = context.payload;
         return payload.comment.body.toLowerCase().includes(search.toLowerCase());
     }
@@ -218,56 +319,34 @@ const isEventWith = (context, search) => {
 };
 exports.isEventWith = isEventWith;
 /**
- * Returns true if the event originated from an issue event.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
+ * Returns the issue number from the event payload.
+ * Throws an error if the event is not an issue, pull request, or comment.
  * @param context
  * @returns
  */
-const isIssue = (context) => {
-    return context.eventName === 'issues';
+const getIssueNumber = (context) => {
+    if ((0, exports.isIssueEvent)(context)) {
+        const payload = context.payload;
+        return payload.issue.number;
+    }
+    if ((0, exports.isPullRequestEvent)(context)) {
+        const payload = context.payload;
+        return payload.pull_request.number;
+    }
+    if ((0, exports.isIssueCommentEvent)(context) || (0, exports.isPullRequestCommentEvent)(context)) {
+        const payload = context.payload;
+        return payload.issue.number;
+    }
+    throw new Error(`Could not determine issue number from event "${context.eventName}"`);
 };
-exports.isIssue = isIssue;
-/**
- * Returns true if the event originated from a pull request event.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
- * @param context
- * @returns
- */
-const isPullRequest = (context) => {
-    return context.eventName === 'pull_request';
-};
-exports.isPullRequest = isPullRequest;
-/**
- * Returns true if the event originated from an issue comment.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
- * @param context
- * @returns
- */
-const isIssueComment = (context) => {
-    var _a;
-    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) === undefined;
-};
-exports.isIssueComment = isIssueComment;
-/**
- * Returns true if the event originated from a pull request comment.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads#issue_comment
- * @param context
- * @returns
- */
-const isPullRequestComment = (context) => {
-    var _a;
-    return context.eventName === 'issue_comment' && ((_a = context.payload.issue) === null || _a === void 0 ? void 0 : _a.pull_request) !== undefined;
-};
-exports.isPullRequestComment = isPullRequestComment;
+exports.getIssueNumber = getIssueNumber;
 /**
  * Returns the owner and name of the repository.
  * @returns
  */
 const getRepo = () => {
-    const [owner, name] = (process.env.GITHUB_REPOSITORY || '').split('/');
-    return { owner, name };
+    const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
+    return { owner, repo };
 };
 exports.getRepo = getRepo;
 /**
@@ -275,14 +354,15 @@ exports.getRepo = getRepo;
  * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
  */
 const writeSummary = (context, issue, request, response) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     yield core.summary
         .addLink('Issue', issue.html_url)
         .addHeading('Request', 3)
-        .addRaw(request.body, true)
+        .addRaw((_a = request.body) !== null && _a !== void 0 ? _a : '', true)
         .addBreak()
         .addLink('Comment', request.html_url)
         .addHeading('Response', 3)
-        .addRaw(response.body, true)
+        .addRaw((_b = response.body) !== null && _b !== void 0 ? _b : '', true)
         .addBreak()
         .addLink('Comment', response.html_url)
         .addBreak()
@@ -291,6 +371,56 @@ const writeSummary = (context, issue, request, response) => __awaiter(void 0, vo
         .write();
 });
 exports.writeSummary = writeSummary;
+/**
+ * Writes a summary of the request to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+const writeRequest = (request) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    yield core.summary
+        .addHeading('Request', 3)
+        .addRaw((_c = request.body) !== null && _c !== void 0 ? _c : '', true)
+        .addBreak()
+        .addLink('Link', request.html_url)
+        .write();
+});
+exports.writeRequest = writeRequest;
+/**
+ * Writes a summary of the response to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+const writeResponse = (response) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    yield core.summary
+        .addHeading('Response', 3)
+        .addRaw((_d = response.body) !== null && _d !== void 0 ? _d : '', true)
+        .addBreak()
+        .addLink('Link', response.html_url)
+        .write();
+});
+exports.writeResponse = writeResponse;
+/**
+ * Writes a summary of context to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+const writeContext = (context) => __awaiter(void 0, void 0, void 0, function* () {
+    yield core.summary
+        .addHeading('GitHub Context', 3)
+        .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
+        .write();
+});
+exports.writeContext = writeContext;
+/**
+ * Print a debug message with optional an object.
+ * @param message
+ * @param obj
+ */
+const debug = (message, obj) => {
+    core.debug(message);
+    if (obj !== undefined)
+        core.debug(JSON.stringify(obj, null, 2));
+};
+exports.debug = debug;
 
 
 /***/ }),
@@ -336,9 +466,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const comment_1 = __nccwpck_require__(3456);
+const issues_1 = __nccwpck_require__(2699);
 const pulls_1 = __nccwpck_require__(8808);
 const utils_1 = __nccwpck_require__(1520);
 const openai_1 = __nccwpck_require__(1933);
+const prompts_1 = __nccwpck_require__(304);
 /**
  * The name and handle of the assistant.
  */
@@ -350,71 +482,73 @@ const ASSISTANT_HANDLE = '@AdaGPT';
  */
 const getInputs = () => ({
     github_token: core.getInput('github_token', { required: true }),
-    issue_number: parseInt(core.getInput('issue_number', { required: true })),
     openai_key: core.getInput('openai_key', { required: true }),
     openai_temperature: parseFloat(core.getInput('openai_temperature')),
     openai_top_p: parseFloat(core.getInput('openai_top_p')),
     openai_max_tokens: parseInt(core.getInput('openai_max_tokens')),
 });
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.debug('Context');
-            core.debug(JSON.stringify(github.context));
+            (0, utils_1.debug)('Context', { context: github.context });
             if (!(0, utils_1.isEventWith)(github.context, ASSISTANT_HANDLE)) {
-                core.debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
+                (0, utils_1.debug)(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
                 return;
             }
             const inputs = getInputs();
-            const { github_token, issue_number, openai_key, openai_temperature, openai_top_p, openai_max_tokens } = inputs;
-            core.debug('Inputs');
-            core.debug(JSON.stringify(inputs));
+            (0, utils_1.debug)('Inputs', { inputs });
+            const issueNumber = (0, utils_1.getIssueNumber)(github.context);
+            (0, utils_1.debug)('Issue number', { issueNumber });
+            const issue = yield (0, issues_1.getIssue)(inputs.github_token, issueNumber);
+            (0, utils_1.debug)('Issue', { issue });
+            const repo = github.context.repo;
             const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
-            const { issue, comment: requestComment, repository } = github.context.payload;
-            const comments = yield (0, comment_1.listComments)(github_token, issue_number);
+            const diff = issue.pull_request ? yield (0, pulls_1.getPullRequestDiff)(inputs.github_token, issueNumber) : '';
+            const comments = ((_a = github.context.payload) === null || _a === void 0 ? void 0 : _a.comment)
+                ? yield (0, comment_1.listCommentsBefore)(inputs.github_token, issueNumber, github.context.payload.comment.id)
+                : [];
             // filter out comments that were made after the request comment
             // TODO can we use the id instead?
-            const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
-            core.debug('Comments');
-            core.debug(JSON.stringify(previousComments));
+            // const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
+            // core.debug('Comments');
+            // core.debug(JSON.stringify(previousComments));
             const prompt = [];
-            if ((0, utils_1.isPullRequestComment)(github.context)) {
-                const diff = yield (0, pulls_1.getPullRequestDiff)(github_token, issue_number);
-                core.debug('Diff');
-                core.debug(diff);
-                prompt.push(...(0, openai_1.generatePullRequestCommentPrompt)({
-                    assistant,
-                    repository,
-                    issue,
-                    requestComment,
-                    previousComments,
-                    diff,
-                }));
+            if ((0, utils_1.isPullRequestEvent)(github.context)) {
+                yield (0, utils_1.writeRequest)(issue);
+                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initPullRequest)(repo, issue, diff));
+            }
+            else if ((0, utils_1.isPullRequestCommentEvent)(github.context)) {
+                const { comment } = github.context.payload;
+                yield (0, utils_1.writeRequest)(comment);
+                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initPullRequest)(repo, issue, diff), ...(0, prompts_1.initPreviousComments)(issue, comments));
+            }
+            else if ((0, utils_1.isIssueEvent)(github.context)) {
+                yield (0, utils_1.writeRequest)(issue);
+                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initIssue)(repo, issue));
+            }
+            else if ((0, utils_1.isIssueCommentEvent)(github.context)) {
+                const { comment } = github.context.payload;
+                yield (0, utils_1.writeRequest)(comment);
+                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initIssue)(repo, issue), ...(0, prompts_1.initPreviousComments)(issue, comments));
             }
             else {
-                prompt.push(...(0, openai_1.generateIssueCommentPrompt)({
-                    assistant,
-                    repository,
-                    issue,
-                    requestComment,
-                    previousComments,
-                }));
+                throw new Error(`Unsupported event: ${github.context.eventName}`);
             }
-            core.debug('Prompt');
-            core.debug(JSON.stringify(prompt));
+            (0, utils_1.debug)('Prompt', { prompt });
             if (prompt.length > 0) {
                 // TODO handle max tokens limit
-                const response = yield (0, openai_1.generateCompletion)(openai_key, {
+                const completion = yield (0, openai_1.generateCompletion)(inputs.openai_key, {
                     messages: prompt,
-                    temperature: openai_temperature,
-                    top_p: openai_top_p,
-                    max_tokens: openai_max_tokens,
+                    temperature: inputs.openai_temperature,
+                    top_p: inputs.openai_top_p,
+                    max_tokens: inputs.openai_max_tokens,
                 });
-                const responseComment = yield (0, comment_1.addComment)(github_token, issue_number, response);
-                core.debug('ResponseComment');
-                core.debug(JSON.stringify(responseComment));
-                yield (0, utils_1.writeSummary)(github.context, issue, requestComment, responseComment);
+                const response = yield (0, comment_1.addComment)(inputs.github_token, issueNumber, completion);
+                (0, utils_1.debug)('Response', { response });
+                yield (0, utils_1.writeResponse)(response);
             }
+            yield (0, utils_1.writeContext)(github.context);
         }
         catch (error) {
             if (error instanceof Error)
@@ -465,135 +599,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.generateCompletion = exports.generatePullRequestCommentPrompt = exports.generateIssueCommentPrompt = exports.generateIssuePrompt = void 0;
+exports.generateCompletion = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __nccwpck_require__(8757);
 const openai_1 = __nccwpck_require__(9211);
 const utils_1 = __nccwpck_require__(8483);
-const initAssistant = (assistant) => {
-    return [
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: [
-                `You are a helpful assistant for GitHub issues and pull requests.`,
-                `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
-                `You respond to comments when someone includes your handle ${assistant.handle}.`,
-            ].join('\n'),
-        },
-    ];
-};
-const initIssue = (repository, issue) => {
-    const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
-    return [
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: [
-                `
-The current ${issueOrPullRequest} was created by ${(0, utils_1.escapeUser)(issue.user.login)} in repository ${repository.full_name}.`,
-                `${issueOrPullRequest} number: ${issue.number}`,
-                `${issueOrPullRequest} title: ${issue.title}`,
-                `${issueOrPullRequest} content: ${issue.body}`,
-            ].join('\n'),
-        },
-    ];
-};
-const initPullRequest = (repository, issue, diff) => {
-    return [
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: `I will provide you with the git diff of the pull request.`,
-        },
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: diff,
-        },
-    ];
-};
-const initPreviousComments = (issue, comments) => {
-    const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
-    return comments.length === 0
-        ? []
-        : [
-            {
-                role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-                content: `I will provide you with a list of previous comments that were already made on the ${issueOrPullRequest}.`,
-            },
-            ...comments.map((comment) => (0, utils_1.isCommentByAssistant)(comment.body)
-                ? {
-                    role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
-                    content: (0, utils_1.unescapeComment)(comment.body),
-                }
-                : {
-                    role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
-                    name: (0, utils_1.escapeUser)(comment.user.login),
-                    content: (0, utils_1.unescapeComment)(comment.body),
-                }),
-        ];
-};
-const initRequestComment = (issue, comment) => {
-    const issueOrPullRequest = issue.pull_request ? 'pull request' : 'issue';
-    return [
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
-            name: (0, utils_1.escapeUser)(comment.user.login),
-            content: (0, utils_1.unescapeComment)(comment.body),
-        },
-        {
-            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-            content: [
-                `The last comment was made by ${(0, utils_1.escapeUser)(comment.user.login)}.`,
-                `This comment activated you, so you should respond to it.`,
-                `Consider the current ${issueOrPullRequest} and the previous comments when you respond.`,
-            ].join('\n'),
-        },
-    ];
-};
-/**
- * Generates an issue comment prompt for the OpenAI API.
- * @param input
- * @returns
- */
-const generateIssuePrompt = (input) => {
-    const { assistant, repository, issue, requestComment, previousComments } = input;
-    return [
-        ...initAssistant(assistant),
-        ...initIssue(repository, issue),
-        ...initPreviousComments(issue, previousComments),
-        ...initRequestComment(issue, requestComment),
-    ];
-};
-exports.generateIssuePrompt = generateIssuePrompt;
-/**
- * Generates an issue comment prompt for the OpenAI API.
- * @param input
- * @returns
- */
-const generateIssueCommentPrompt = (input) => {
-    const { assistant, repository, issue, requestComment, previousComments } = input;
-    return [
-        ...initAssistant(assistant),
-        ...initIssue(repository, issue),
-        ...initPreviousComments(issue, previousComments),
-        ...initRequestComment(issue, requestComment),
-    ];
-};
-exports.generateIssueCommentPrompt = generateIssueCommentPrompt;
-/**
- * Generates a pull request comment prompt for the OpenAI API.
- * @param input
- * @returns
- */
-const generatePullRequestCommentPrompt = (input) => {
-    const { assistant, repository, issue, requestComment, previousComments, diff } = input;
-    return [
-        ...initAssistant(assistant),
-        ...initIssue(repository, issue),
-        ...initPullRequest(repository, issue, diff),
-        ...initPreviousComments(issue, previousComments),
-        ...initRequestComment(issue, requestComment),
-    ];
-};
-exports.generatePullRequestCommentPrompt = generatePullRequestCommentPrompt;
+const utils_2 = __nccwpck_require__(1520);
 /**
  * Creates a chat completion using the OpenAI API.
  * @param openai_key
@@ -608,11 +619,9 @@ function generateCompletion(openai_key, request) {
         }));
         try {
             const completion = yield openAi.createChatCompletion(Object.assign(Object.assign({ model: 'gpt-3.5-turbo', temperature: 0.8 }, request), { n: 1, stream: false }));
-            core.debug('Completion');
-            core.debug(JSON.stringify(completion.data, null, 2));
+            (0, utils_2.debug)('Completion', { completion: completion.data });
             if (!((_a = completion.data.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) || completion.data.choices[0].finish_reason !== 'stop') {
                 // https://platform.openai.com/docs/guides/chat/response-format
-                core.debug(`API return incomplete: ${completion.data.choices[0].finish_reason}`);
                 throw new Error(`API return incomplete: ${completion.data.choices[0].finish_reason}`);
             }
             const content = (_b = completion.data.choices[0].message) === null || _b === void 0 ? void 0 : _b.content;
@@ -623,7 +632,7 @@ function generateCompletion(openai_key, request) {
             if ((0, axios_1.isAxiosError)(error)) {
                 const response = error.response;
                 if ((response === null || response === void 0 ? void 0 : response.status) === 429) {
-                    core.debug('Request to OpenAI failed with status 429. This is due to incorrect billing setup or excessive quota usage. Please follow this guide to fix it: https://help.openai.com/en/articles/6891831-error-code-429-you-exceeded-your-current-quota-please-check-your-plan-and-billing-details');
+                    core.error('Request to OpenAI failed with status 429. This is due to incorrect billing setup or excessive quota usage. Please follow this guide to fix it: https://help.openai.com/en/articles/6891831-error-code-429-you-exceeded-your-current-quota-please-check-your-plan-and-billing-details');
                 }
                 else {
                     core.error(`Request to OpenAI failed with status ${response === null || response === void 0 ? void 0 : response.status}: ${(_d = (_c = response === null || response === void 0 ? void 0 : response.data) === null || _c === void 0 ? void 0 : _c.error) === null || _d === void 0 ? void 0 : _d.message}`);
@@ -638,6 +647,103 @@ function generateCompletion(openai_key, request) {
     });
 }
 exports.generateCompletion = generateCompletion;
+
+
+/***/ }),
+
+/***/ 304:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.initPreviousComments = exports.initPullRequest = exports.initIssue = exports.initAssistant = void 0;
+const openai_1 = __nccwpck_require__(9211);
+const utils_1 = __nccwpck_require__(8483);
+const initAssistant = (assistant) => {
+    return [
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+            content: [
+                `You are a helpful assistant for GitHub issues and pull requests.`,
+                `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
+                `You respond to comments when someone mentions you.`,
+            ].join('\n'),
+        },
+    ];
+};
+exports.initAssistant = initAssistant;
+const initIssue = (repo, issue) => {
+    return [
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+            content: [
+                `The current issue was created by ${(0, utils_1.escapeUser)(issue.user.login)} in repository ${repo.repo}.`,
+                `Issue number: ${issue.number}`,
+                `Issue title: ${issue.title}`,
+                `Issue description: ${issue.body}`,
+            ].join('\n'),
+        },
+    ];
+};
+exports.initIssue = initIssue;
+const initPullRequest = (repo, issue, diff) => {
+    return [
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+            content: [
+                `The current pull request was created by ${(0, utils_1.escapeUser)(issue.user.login)} in repository ${repo.repo}.`,
+                `Pull request number: ${issue.number}`,
+                `Pull request title: ${issue.title}`,
+                `Pull request description:`,
+                issue.body,
+            ].join('\n'),
+        },
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+            content: [`Git diff:`, diff].join('\n'),
+        },
+    ];
+};
+exports.initPullRequest = initPullRequest;
+const initPreviousComments = (issue, comments) => {
+    return comments.length === 0
+        ? []
+        : [
+            {
+                role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+                content: `Here are the comments:`,
+            },
+            ...comments.map((comment) => (0, utils_1.isCommentByAssistant)(comment.body)
+                ? {
+                    role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
+                    content: (0, utils_1.unescapeComment)(comment.body),
+                }
+                : {
+                    role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
+                    name: (0, utils_1.escapeUser)(comment.user.login),
+                    content: (0, utils_1.unescapeComment)(comment.body),
+                }),
+        ];
+};
+exports.initPreviousComments = initPreviousComments;
+// export const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
+//   return [
+//     {
+//       role: ChatCompletionRequestMessageRoleEnum.User,
+//       name: escapeUser(comment.user.login),
+//       content: unescapeComment(comment.body),
+//     },
+//     {
+//       role: ChatCompletionRequestMessageRoleEnum.System,
+//       content: [
+//         `The last comment was made by ${escapeUser(comment.user.login)}.`,
+//         `This comment activated you, so you should respond to it.`,
+//       ].join('\n'),
+//     },
+//   ];
+// };
+// export const getActivationPrompt = (): ChatCompletionRequestMessage[] => {};
 
 
 /***/ }),

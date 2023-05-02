@@ -7,7 +7,7 @@ import type { IssueComment } from '@octokit/webhooks-types';
  * @param issue_number
  * @returns
  */
-export async function listComments(github_token: string, issue_number: number): Promise<IssueComment[]> {
+export const listComments = async (github_token: string, issue_number: number): Promise<IssueComment[]> => {
   const { owner, repo } = github.context.repo;
   const octokit = github.getOctokit(github_token);
 
@@ -20,7 +20,19 @@ export async function listComments(github_token: string, issue_number: number): 
   });
 
   return comments as IssueComment[];
-}
+};
+
+export const listCommentsBefore = async (
+  github_token: string,
+  issue_number: number,
+  comment_id: number,
+): Promise<IssueComment[]> => {
+  const comments = await listComments(github_token, issue_number);
+
+  const index = comments.findIndex((c) => c.id === comment_id);
+
+  return comments.slice(0, index);
+};
 
 /**
  * Adds a comment to an issue or pull request.
@@ -29,7 +41,7 @@ export async function listComments(github_token: string, issue_number: number): 
  * @param body
  * @returns
  */
-export async function addComment(github_token: string, issue_number: number, body: string): Promise<IssueComment> {
+export const addComment = async (github_token: string, issue_number: number, body: string): Promise<IssueComment> => {
   const { owner, repo } = github.context.repo;
   const octokit = github.getOctokit(github_token);
 
@@ -41,4 +53,4 @@ export async function addComment(github_token: string, issue_number: number, bod
   });
 
   return comment.data as IssueComment;
-}
+};

@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import { isAxiosError } from 'axios';
 import { Configuration, CreateChatCompletionRequest, OpenAIApi } from 'openai';
 import { escapeComment } from './utils';
+import { debug } from '../github/utils';
 
 /**
  * Creates a chat completion using the OpenAI API.
@@ -28,12 +29,10 @@ export async function generateCompletion(
       stream: false,
     });
 
-    core.debug('Completion');
-    core.debug(JSON.stringify(completion.data, null, 2));
+    debug('Completion', { completion: completion.data });
 
     if (!completion.data.choices[0].message?.content || completion.data.choices[0].finish_reason !== 'stop') {
       // https://platform.openai.com/docs/guides/chat/response-format
-      core.debug(`API return incomplete: ${completion.data.choices[0].finish_reason}`);
       throw new Error(`API return incomplete: ${completion.data.choices[0].finish_reason}`);
     }
 
@@ -45,7 +44,7 @@ export async function generateCompletion(
     if (isAxiosError(error)) {
       const response = error.response;
       if (response?.status === 429) {
-        core.debug(
+        core.error(
           'Request to OpenAI failed with status 429. This is due to incorrect billing setup or excessive quota usage. Please follow this guide to fix it: https://help.openai.com/en/articles/6891831-error-code-429-you-exceeded-your-current-quota-please-check-your-plan-and-billing-details',
         );
       } else {

@@ -1,28 +1,12 @@
-import { Issue, IssueComment, PullRequest, Repository } from '@octokit/webhooks-types';
+import { Issue, IssueComment, PullRequest } from '@octokit/webhooks-types';
 import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from 'openai';
-import { escapeUser, isCommentByAssistant, unescapeComment } from './utils';
 import { Repo } from '../github/utils';
+import { escapeUser, isCommentByAssistant, unescapeComment } from './utils';
 
 type Assistant = {
   name: string;
   handle: string;
 };
-
-// type PromptInput = {
-//   assistant: Assistant;
-//   repository: Repository;
-//   issue: Issue;
-//   requestComment: IssueComment;
-//   previousComments: IssueComment[];
-// };
-
-// type IssuePromptInput = PromptInput & {};
-
-// type CommentPromptInput = PromptInput & {};
-
-// type PullRequestPromptInput = PromptInput & {
-//   diff: string;
-// };
 
 export const initAssistant = (assistant: Assistant): ChatCompletionRequestMessage[] => {
   return [
@@ -31,7 +15,7 @@ export const initAssistant = (assistant: Assistant): ChatCompletionRequestMessag
       content: [
         `You are a helpful assistant for GitHub issues and pull requests.`,
         `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
-        `You respond to comments when someone includes your handle ${assistant.handle}.`,
+        `You respond to comments when someone mentions you.`,
       ].join('\n'),
     },
   ];
@@ -80,7 +64,7 @@ export const initPreviousComments = (issue: Issue, comments: IssueComment[]): Ch
     : [
         {
           role: ChatCompletionRequestMessageRoleEnum.System,
-          content: `Here are the previous comments:`,
+          content: `Here are the comments:`,
         },
         ...comments.map((comment) =>
           isCommentByAssistant(comment.body)
@@ -97,21 +81,21 @@ export const initPreviousComments = (issue: Issue, comments: IssueComment[]): Ch
       ];
 };
 
-export const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
-  return [
-    {
-      role: ChatCompletionRequestMessageRoleEnum.User,
-      name: escapeUser(comment.user.login),
-      content: unescapeComment(comment.body),
-    },
-    {
-      role: ChatCompletionRequestMessageRoleEnum.System,
-      content: [
-        `The last comment was made by ${escapeUser(comment.user.login)}.`,
-        `This comment activated you, so you should respond to it.`,
-      ].join('\n'),
-    },
-  ];
-};
+// export const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
+//   return [
+//     {
+//       role: ChatCompletionRequestMessageRoleEnum.User,
+//       name: escapeUser(comment.user.login),
+//       content: unescapeComment(comment.body),
+//     },
+//     {
+//       role: ChatCompletionRequestMessageRoleEnum.System,
+//       content: [
+//         `The last comment was made by ${escapeUser(comment.user.login)}.`,
+//         `This comment activated you, so you should respond to it.`,
+//       ].join('\n'),
+//     },
+//   ];
+// };
 
 // export const getActivationPrompt = (): ChatCompletionRequestMessage[] => {};

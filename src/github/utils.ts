@@ -137,3 +137,50 @@ export const writeSummary = async (
     .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
     .write();
 };
+
+/**
+ * Writes a summary of the request to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+export const writeRequest = async (request: Issue | PullRequest | IssueComment): Promise<void> => {
+  await core.summary
+    .addHeading('Request', 3)
+    .addRaw(request.body ?? '', true)
+    .addBreak()
+    .addLink('Link', request.html_url)
+    .write();
+};
+
+/**
+ * Writes a summary of the response to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+export const writeResponse = async (response: Issue | PullRequest | IssueComment): Promise<void> => {
+  await core.summary
+    .addHeading('Response', 3)
+    .addRaw(response.body ?? '', true)
+    .addBreak()
+    .addLink('Link', response.html_url)
+    .write();
+};
+
+/**
+ * Writes a summary of context to the job log.
+ * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+ */
+export const writeContext = async (context: Context): Promise<void> => {
+  await core.summary
+    .addHeading('GitHub Context', 3)
+    .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
+    .write();
+};
+
+/**
+ * Print a debug message with optional an object.
+ * @param message
+ * @param obj
+ */
+export const debug = (message: string, obj?: Record<string, unknown>): void => {
+  core.debug(message);
+  if (obj !== undefined) core.debug(JSON.stringify(obj, null, 2));
+};

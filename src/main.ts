@@ -1,20 +1,23 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { IssueCommentCreatedEvent, IssuesOpenedEvent, PullRequestOpenedEvent } from '@octokit/webhooks-types';
-import { addComment, listComments } from './github/comment';
+import { IssueCommentCreatedEvent } from '@octokit/webhooks-types';
+import { addComment, listCommentsBefore } from './github/comment';
+import { getIssue } from './github/issues';
 import { getPullRequestDiff } from './github/pulls';
 import {
+  debug,
   getIssueNumber,
   isEventWith,
   isIssueCommentEvent,
   isIssueEvent,
   isPullRequestCommentEvent,
   isPullRequestEvent,
-  writeSummary,
+  writeContext,
+  writeRequest,
+  writeResponse,
 } from './github/utils';
 import { generateCompletion } from './openai/openai';
 import { initAssistant, initIssue, initPreviousComments, initPullRequest } from './openai/prompts';
-import { getIssue } from './github/issues';
 
 /**
  * The name and handle of the assistant.
@@ -44,97 +47,85 @@ const getInputs = (): Inputs => ({
 
 async function run(): Promise<void> {
   try {
-    core.debug('Context');
-    core.debug(JSON.stringify(github.context));
+    debug('Context', { context: github.context });
 
     if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
-      core.debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
+      debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
       return;
     }
 
     const inputs = getInputs();
-    core.debug('Inputs');
-    core.debug(JSON.stringify(inputs));
+    debug('Inputs', { inputs });
 
     const issueNumber = getIssueNumber(github.context);
-    core.debug(`Issue number: ${issueNumber}`);
+    debug('Issue number', { issueNumber });
 
     const issue = await getIssue(inputs.github_token, issueNumber);
-    core.debug('Issue');
-    core.debug(JSON.stringify(issue));
+    debug('Issue', { issue });
 
     const repo = github.context.repo;
 
     const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
-    // const { issue, comment: requestComment, repository } = github.context.payload as IssueCommentCreatedEvent;
-    const comments = await listComments(inputs.github_token, issueNumber);
+
+    const diff = issue.pull_request ? await getPullRequestDiff(inputs.github_token, issueNumber) : '';
+
+    const comments = github.context.payload?.comment
+      ? await listCommentsBefore(inputs.github_token, issueNumber, github.context.payload.comment.id)
+      : [];
 
     // filter out comments that were made after the request comment
     // TODO can we use the id instead?
-    const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
+    // const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
 
-    core.debug('Comments');
-    core.debug(JSON.stringify(previousComments));
+    // core.debug('Comments');
+    // core.debug(JSON.stringify(previousComments));
 
     const prompt = [];
 
     if (isPullRequestEvent(github.context)) {
-      // const { pull_request: issue, repository } = github.context.payload as PullRequestOpenedEvent;
-
-      const diff = await getPullRequestDiff(inputs.github_token, issueNumber);
-      core.debug('Diff');
-      core.debug(diff);
+      await writeRequest(issue);
 
       prompt.push(...initAssistant(assistant), ...initPullRequest(repo, issue, diff));
     } else if (isPullRequestCommentEvent(github.context)) {
-      // const { issue, repository } = github.context.payload as IssueCommentCreatedEvent;
-
-      const diff = await getPullRequestDiff(inputs.github_token, issueNumber);
-      core.debug('Diff');
-      core.debug(diff);
+      const { comment } = github.context.payload as IssueCommentCreatedEvent;
+      await writeRequest(comment);
 
       prompt.push(
         ...initAssistant(assistant),
         ...initPullRequest(repo, issue, diff),
-        ...initPreviousComments(issue, previousComments),
-        // ...initRequestComment(issue, requestComment),
+        ...initPreviousComments(issue, comments),
       );
     } else if (isIssueEvent(github.context)) {
-      // const { issue, repository } = github.context.payload as IssuesOpenedEvent;
+      await writeRequest(issue);
 
       prompt.push(...initAssistant(assistant), ...initIssue(repo, issue));
     } else if (isIssueCommentEvent(github.context)) {
-      // const { issue, repository } = github.context.payload as IssueCommentCreatedEvent;
+      const { comment } = github.context.payload as IssueCommentCreatedEvent;
+      await writeRequest(comment);
 
-      prompt.push(
-        ...initAssistant(assistant),
-        ...initIssue(repo, issue),
-        ...initPreviousComments(issue, previousComments),
-        // ...initRequestComment(issue, requestComment),
-      );
+      prompt.push(...initAssistant(assistant), ...initIssue(repo, issue), ...initPreviousComments(issue, comments));
     } else {
       throw new Error(`Unsupported event: ${github.context.eventName}`);
     }
 
-    core.debug('Prompt');
-    core.debug(JSON.stringify(prompt));
+    debug('Prompt', { prompt });
 
     if (prompt.length > 0) {
       // TODO handle max tokens limit
-      const response = await generateCompletion(inputs.openai_key, {
+      const completion = await generateCompletion(inputs.openai_key, {
         messages: prompt,
         temperature: inputs.openai_temperature,
         top_p: inputs.openai_top_p,
         max_tokens: inputs.openai_max_tokens,
       });
 
-      const responseComment = await addComment(inputs.github_token, issueNumber, response);
-      core.debug('ResponseComment');
-      core.debug(JSON.stringify(responseComment));
+      const response = await addComment(inputs.github_token, issueNumber, completion);
+      debug('Response', { response });
 
-      // TODO
-      // await writeSummary(github.context, issue, requestComment, responseComment);
+      await writeResponse(response);
     }
+
+    await writeContext(github.context);
   } catch (error) {
     if (error instanceof Error) core.setFailed(error);
   }

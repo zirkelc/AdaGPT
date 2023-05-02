@@ -33,10 +33,11 @@ const initAssistant = (assistant: Assistant): ChatCompletionRequestMessage[] => 
   return [
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
-      content: `
-You are a helpful assistant for GitHub issues and pull requests. 
-Your name is "${assistant.name}" and your handle is ${assistant.handle}.
-You respond to comments when someone includes your handle ${assistant.handle}.`,
+      content: [
+        `You are a helpful assistant for GitHub issues and pull requests.`,
+        `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
+        `You respond to comments when someone includes your handle ${assistant.handle}.`,
+      ].join('\n'),
     },
   ];
 };
@@ -47,11 +48,15 @@ const initIssue = (repository: Repository, issue: Issue): ChatCompletionRequestM
   return [
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
-      content: `
-The current ${issueOrPullRequest} was created by ${escapeUser(issue.user.login)} in repository ${repository.full_name}.
-${issueOrPullRequest} number: ${issue.number}
-${issueOrPullRequest} title: ${issue.title}
-${issueOrPullRequest} content: ${issue.body}`,
+      content: [
+        `
+The current ${issueOrPullRequest} was created by ${escapeUser(issue.user.login)} in repository ${
+          repository.full_name
+        }.`,
+        `${issueOrPullRequest} number: ${issue.number}`,
+        `${issueOrPullRequest} title: ${issue.title}`,
+        `${issueOrPullRequest} content: ${issue.body}`,
+      ].join('\n'),
     },
   ];
 };
@@ -103,10 +108,11 @@ const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletion
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
-      content: `
-The last comment was made by ${escapeUser(comment.user.login)}.
-This comment activated you, so you should respond to it.
-Consider the current ${issueOrPullRequest} and the previous comments when you respond.`,
+      content: [
+        `The last comment was made by ${escapeUser(comment.user.login)}.`,
+        `This comment activated you, so you should respond to it.`,
+        `Consider the current ${issueOrPullRequest} and the previous comments when you respond.`,
+      ].join('\n'),
     },
   ];
 };

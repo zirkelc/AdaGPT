@@ -178,7 +178,7 @@ export async function generateCompletion(
     });
 
     core.debug('Completion');
-    core.debug(JSON.stringify(completion, null, 2));
+    core.debug(JSON.stringify(completion.data, null, 2));
 
     if (!completion.data.choices[0].message?.content || completion.data.choices[0].finish_reason !== 'stop') {
       // https://platform.openai.com/docs/guides/chat/response-format

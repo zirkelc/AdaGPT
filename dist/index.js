@@ -566,7 +566,7 @@ function generateCompletion(openai_key, request) {
         try {
             const completion = yield openAi.createChatCompletion(Object.assign(Object.assign({ model: 'gpt-3.5-turbo', temperature: 0.8 }, request), { n: 1, stream: false }));
             core.debug('Completion');
-            core.debug(JSON.stringify(completion, null, 2));
+            core.debug(JSON.stringify(completion.data, null, 2));
             if (!((_a = completion.data.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) || completion.data.choices[0].finish_reason !== 'stop') {
                 // https://platform.openai.com/docs/guides/chat/response-format
                 core.debug(`API return incomplete: ${completion.data.choices[0].finish_reason}`);

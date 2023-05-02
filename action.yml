@@ -10,9 +10,6 @@ inputs:
   github_token:
     description: 'GitHub Token'
     required: true
-  issue_number:
-    description: 'Issue Number'
-    required: true
   openai_key: 
     # https://platform.openai.com/account/api-keys
     description: 'OpenAI API Key'

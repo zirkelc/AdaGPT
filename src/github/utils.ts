@@ -5,34 +5,9 @@ import {
   IssueComment,
   IssueCommentCreatedEvent,
   IssuesOpenedEvent,
+  PullRequest,
   PullRequestOpenedEvent,
 } from '@octokit/webhooks-types';
-
-/**
- * Returns true if the event paylod contains the search string.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
- * @param context
- * @returns
- */
-export const isEventWith = (context: Context, search: string): boolean => {
-  if (context.eventName === 'issues') {
-    const payload = context.payload as IssuesOpenedEvent;
-    return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
-  }
-
-  if (context.eventName === 'pull_request') {
-    const payload = context.payload as PullRequestOpenedEvent;
-    return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
-  }
-
-  if (context.eventName === 'issue_comment') {
-    const payload = context.payload as IssueCommentCreatedEvent;
-    return payload.comment.body.toLowerCase().includes(search.toLowerCase());
-  }
-
-  return false;
-};
 
 /**
  * Returns true if the event originated from an issue event.
@@ -40,7 +15,7 @@ export const isEventWith = (context: Context, search: string): boolean => {
  * @param context
  * @returns
  */
-export const isIssue = (context: Context): boolean => {
+export const isIssueEvent = (context: Context): boolean => {
   return context.eventName === 'issues';
 };
 
@@ -50,7 +25,7 @@ export const isIssue = (context: Context): boolean => {
  * @param context
  * @returns
  */
-export const isPullRequest = (context: Context): boolean => {
+export const isPullRequestEvent = (context: Context): boolean => {
   return context.eventName === 'pull_request';
 };
 
@@ -61,7 +36,7 @@ export const isPullRequest = (context: Context): boolean => {
  * @param context
  * @returns
  */
-export const isIssueComment = (context: Context): boolean => {
+export const isIssueCommentEvent = (context: Context): boolean => {
   return context.eventName === 'issue_comment' && context.payload.issue?.pull_request === undefined;
 };
 
@@ -72,18 +47,69 @@ export const isIssueComment = (context: Context): boolean => {
  * @param context
  * @returns
  */
-export const isPullRequestComment = (context: Context): boolean => {
+export const isPullRequestCommentEvent = (context: Context): boolean => {
   return context.eventName === 'issue_comment' && context.payload.issue?.pull_request !== undefined;
 };
 
-export type Repo = { owner: string; name: string };
+/**
+ * Returns true if the event paylod contains the search string.
+ * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+ * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+ * @param context
+ * @returns
+ */
+export const isEventWith = (context: Context, search: string): boolean => {
+  if (isIssueEvent(context)) {
+    const payload = context.payload as IssuesOpenedEvent;
+    return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+  }
+
+  if (isPullRequestEvent(context)) {
+    const payload = context.payload as PullRequestOpenedEvent;
+    return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+  }
+
+  if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
+    const payload = context.payload as IssueCommentCreatedEvent;
+    return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+  }
+
+  return false;
+};
+
+/**
+ * Returns the issue number from the event payload.
+ * Throws an error if the event is not an issue, pull request, or comment.
+ * @param context
+ * @returns
+ */
+export const getIssueNumber = (context: Context): number => {
+  if (isIssueEvent(context)) {
+    const payload = context.payload as IssuesOpenedEvent;
+    return payload.issue.number;
+  }
+
+  if (isPullRequestEvent(context)) {
+    const payload = context.payload as PullRequestOpenedEvent;
+    return payload.pull_request.number;
+  }
+
+  if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
+    const payload = context.payload as IssueCommentCreatedEvent;
+    return payload.issue.number;
+  }
+
+  throw new Error(`Could not determine issue number from event "${context.eventName}"`);
+};
+
+export type Repo = { owner: string; repo: string };
 /**
  * Returns the owner and name of the repository.
  * @returns
  */
 export const getRepo = (): Repo => {
-  const [owner, name] = (process.env.GITHUB_REPOSITORY || '').split('/');
-  return { owner, name };
+  const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
+  return { owner, repo };
 };
 
 /**
@@ -92,18 +118,18 @@ export const getRepo = (): Repo => {
  */
 export const writeSummary = async (
   context: Context,
-  issue: Issue,
-  request: IssueComment,
-  response: IssueComment,
+  issue: Issue | PullRequest,
+  request: Issue | PullRequest | IssueComment,
+  response: Issue | PullRequest | IssueComment,
 ): Promise<void> => {
   await core.summary
     .addLink('Issue', issue.html_url)
     .addHeading('Request', 3)
-    .addRaw(request.body, true)
+    .addRaw(request.body ?? '', true)
     .addBreak()
     .addLink('Comment', request.html_url)
     .addHeading('Response', 3)
-    .addRaw(response.body, true)
+    .addRaw(response.body ?? '', true)
     .addBreak()
     .addLink('Comment', response.html_url)
     .addBreak()

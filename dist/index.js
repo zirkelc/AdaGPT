@@ -255,7 +255,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.debug = exports.writeContext = exports.writeResponse = exports.writeRequest = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.isEventWith = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
+exports.debug = exports.writeContext = exports.writeResponse = exports.writeRequest = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.getEventPayload = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 /**
  * Returns true if the event originated from an issue event.
@@ -308,22 +308,37 @@ exports.isPullRequestCommentEvent = isPullRequestCommentEvent;
  * @param context
  * @returns
  */
-const isEventWith = (context, search) => {
+// export const isEventWith = (context: Context, search: string): boolean => {
+//   if (isIssueEvent(context)) {
+//     const payload = context.payload as IssuesOpenedEvent;
+//     return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+//   }
+//   if (isPullRequestEvent(context)) {
+//     const payload = context.payload as PullRequestOpenedEvent;
+//     return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+//   }
+//   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
+//     const payload = context.payload as IssueCommentCreatedEvent;
+//     return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+//   }
+//   return false;
+// };
+const getEventPayload = (context) => {
     if ((0, exports.isIssueEvent)(context)) {
         const payload = context.payload;
-        return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+        return payload.issue;
     }
     if ((0, exports.isPullRequestEvent)(context)) {
         const payload = context.payload;
-        return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+        return payload.pull_request;
     }
     if ((0, exports.isIssueCommentEvent)(context) || (0, exports.isPullRequestCommentEvent)(context)) {
         const payload = context.payload;
-        return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+        return payload.comment;
     }
-    return false;
+    return undefined;
 };
-exports.isEventWith = isEventWith;
+exports.getEventPayload = getEventPayload;
 /**
  * Returns the issue number from the event payload.
  * Throws an error if the event is not an issue, pull request, or comment.
@@ -482,6 +497,7 @@ const prompts_1 = __nccwpck_require__(304);
  */
 const ASSISTANT_NAME = 'AdaGPT';
 const ASSISTANT_HANDLE = '@AdaGPT';
+const ASSISTANT_REGEX = /@adagpt/i;
 /**
  * Returns the inputs for the action.
  * @returns
@@ -494,52 +510,40 @@ const getInputs = () => ({
     openai_max_tokens: parseInt(core.getInput('openai_max_tokens')),
 });
 function run() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             (0, utils_1.debug)('Context', { context: github.context });
-            if (!(0, utils_1.isEventWith)(github.context, ASSISTANT_HANDLE)) {
+            const request = (0, utils_1.getEventPayload)(github.context);
+            if (!(request === null || request === void 0 ? void 0 : request.body) || ASSISTANT_REGEX.test(request.body)) {
                 (0, utils_1.debug)(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
                 return;
             }
+            // if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
+            //   debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
+            //   return;
+            // }
             const inputs = getInputs();
             (0, utils_1.debug)('Inputs', { inputs });
-            const issueNumber = (0, utils_1.getIssueNumber)(github.context);
-            (0, utils_1.debug)('Issue number', { issueNumber });
-            const issue = yield (0, issues_1.getIssue)(inputs.github_token, issueNumber);
+            // const issueNumber = getIssueNumber(github.context);
+            // const iss = github.context.issue.number;
+            // debug('Issue number', { issueNumber });
+            const issue = yield (0, issues_1.getIssue)(inputs.github_token, github.context.issue.number);
             (0, utils_1.debug)('Issue', { issue });
             const repo = github.context.repo;
             const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
-            const diff = issue.pull_request ? yield (0, pulls_1.getPullRequestDiff)(inputs.github_token, issueNumber) : '';
-            const comments = ((_a = github.context.payload) === null || _a === void 0 ? void 0 : _a.comment)
-                ? yield (0, comment_1.listCommentsBefore)(inputs.github_token, issueNumber, github.context.payload.comment.id)
-                : [];
-            // filter out comments that were made after the request comment
-            // TODO can we use the id instead?
-            // const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
-            // core.debug('Comments');
-            // core.debug(JSON.stringify(previousComments));
-            const prompt = [];
-            if ((0, utils_1.isPullRequestEvent)(github.context)) {
-                yield (0, utils_1.writeRequest)(issue);
-                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initPullRequest)(repo, issue, diff));
-            }
-            else if ((0, utils_1.isPullRequestCommentEvent)(github.context)) {
-                const { comment } = github.context.payload;
-                yield (0, utils_1.writeRequest)(comment);
-                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initPullRequest)(repo, issue, diff), ...(0, prompts_1.initPreviousComments)(issue, comments));
-            }
-            else if ((0, utils_1.isIssueEvent)(github.context)) {
-                yield (0, utils_1.writeRequest)(issue);
-                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initIssue)(repo, issue));
-            }
-            else if ((0, utils_1.isIssueCommentEvent)(github.context)) {
-                const { comment } = github.context.payload;
-                yield (0, utils_1.writeRequest)(comment);
-                prompt.push(...(0, prompts_1.initAssistant)(assistant), ...(0, prompts_1.initIssue)(repo, issue), ...(0, prompts_1.initPreviousComments)(issue, comments));
+            const prompt = [...(0, prompts_1.initAssistant)(assistant)];
+            if (issue.pull_request) {
+                const diff = yield (0, pulls_1.getPullRequestDiff)(inputs.github_token, github.context.issue.number);
+                (0, utils_1.debug)('Diff', { diff });
+                prompt.push(...(0, prompts_1.initPullRequest)(repo, issue, diff));
             }
             else {
-                throw new Error(`Unsupported event: ${github.context.eventName}`);
+                prompt.push(...(0, prompts_1.initIssue)(repo, issue));
+            }
+            if (github.context.eventName === 'issue_comment') {
+                const { comment } = github.context.payload;
+                const comments = yield (0, comment_1.listCommentsBefore)(inputs.github_token, github.context.issue.number, comment.id);
+                prompt.push(...(0, prompts_1.initPreviousComments)(issue, comments));
             }
             (0, utils_1.debug)('Prompt', { prompt });
             if (prompt.length > 0) {
@@ -550,7 +554,7 @@ function run() {
                     top_p: inputs.openai_top_p,
                     max_tokens: inputs.openai_max_tokens,
                 });
-                const response = yield (0, comment_1.addComment)(inputs.github_token, issueNumber, completion);
+                const response = yield (0, comment_1.addComment)(inputs.github_token, github.context.issue.number, completion);
                 (0, utils_1.debug)('Response', { response });
                 yield (0, utils_1.writeResponse)(response);
             }

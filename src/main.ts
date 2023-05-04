@@ -1,21 +1,10 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { IssueCommentCreatedEvent } from '@octokit/webhooks-types';
+import type { IssueCommentCreatedEvent } from '@octokit/webhooks-types';
 import { addComment, listCommentsBefore } from './github/comment';
 import { getIssue } from './github/issues';
 import { getPullRequestDiff } from './github/pulls';
-import {
-  debug,
-  getIssueNumber,
-  isEventWith,
-  isIssueCommentEvent,
-  isIssueEvent,
-  isPullRequestCommentEvent,
-  isPullRequestEvent,
-  writeContext,
-  writeRequest,
-  writeResponse,
-} from './github/utils';
+import { debug, getEventPayload, writeContext, writeResponse } from './github/utils';
 import { generateCompletion } from './openai/openai';
 import { initAssistant, initIssue, initPreviousComments, initPullRequest } from './openai/prompts';
 
@@ -24,6 +13,7 @@ import { initAssistant, initIssue, initPreviousComments, initPullRequest } from 
  */
 const ASSISTANT_NAME = 'AdaGPT';
 const ASSISTANT_HANDLE = '@AdaGPT';
+const ASSISTANT_REGEX = /@adagpt/i;
 
 type Inputs = {
   github_token: string;
@@ -49,63 +39,46 @@ async function run(): Promise<void> {
   try {
     debug('Context', { context: github.context });
 
-    if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
+    const request = getEventPayload(github.context);
+    if (!request?.body || ASSISTANT_REGEX.test(request.body)) {
       debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
       return;
     }
 
+    // if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
+    //   debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
+    //   return;
+    // }
+
     const inputs = getInputs();
     debug('Inputs', { inputs });
 
-    const issueNumber = getIssueNumber(github.context);
-    debug('Issue number', { issueNumber });
+    // const issueNumber = getIssueNumber(github.context);
+    // const iss = github.context.issue.number;
+    // debug('Issue number', { issueNumber });
 
-    const issue = await getIssue(inputs.github_token, issueNumber);
+    const issue = await getIssue(inputs.github_token, github.context.issue.number);
     debug('Issue', { issue });
 
     const repo = github.context.repo;
-
     const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
 
-    const diff = issue.pull_request ? await getPullRequestDiff(inputs.github_token, issueNumber) : '';
+    const prompt = [...initAssistant(assistant)];
 
-    const comments = github.context.payload?.comment
-      ? await listCommentsBefore(inputs.github_token, issueNumber, github.context.payload.comment.id)
-      : [];
+    if (issue.pull_request) {
+      const diff = await getPullRequestDiff(inputs.github_token, github.context.issue.number);
+      debug('Diff', { diff });
 
-    // filter out comments that were made after the request comment
-    // TODO can we use the id instead?
-    // const previousComments = comments.filter((comment) => comment.created_at < requestComment.created_at);
-
-    // core.debug('Comments');
-    // core.debug(JSON.stringify(previousComments));
-
-    const prompt = [];
-
-    if (isPullRequestEvent(github.context)) {
-      await writeRequest(issue);
-
-      prompt.push(...initAssistant(assistant), ...initPullRequest(repo, issue, diff));
-    } else if (isPullRequestCommentEvent(github.context)) {
-      const { comment } = github.context.payload as IssueCommentCreatedEvent;
-      await writeRequest(comment);
-
-      prompt.push(
-        ...initAssistant(assistant),
-        ...initPullRequest(repo, issue, diff),
-        ...initPreviousComments(issue, comments),
-      );
-    } else if (isIssueEvent(github.context)) {
-      await writeRequest(issue);
-
-      prompt.push(...initAssistant(assistant), ...initIssue(repo, issue));
-    } else if (isIssueCommentEvent(github.context)) {
-      const { comment } = github.context.payload as IssueCommentCreatedEvent;
-      await writeRequest(comment);
-
-      prompt.push(...initAssistant(assistant), ...initIssue(repo, issue), ...initPreviousComments(issue, comments));
+      prompt.push(...initPullRequest(repo, issue, diff));
     } else {
-      throw new Error(`Unsupported event: ${github.context.eventName}`);
+      prompt.push(...initIssue(repo, issue));
+    }
+
+    if (github.context.eventName === 'issue_comment') {
+      const { comment } = github.context.payload as IssueCommentCreatedEvent;
+      const comments = await listCommentsBefore(inputs.github_token, github.context.issue.number, comment.id);
+
+      prompt.push(...initPreviousComments(issue, comments));
     }
 
     debug('Prompt', { prompt });
@@ -119,7 +92,7 @@ async function run(): Promise<void> {
         max_tokens: inputs.openai_max_tokens,
       });
 
-      const response = await addComment(inputs.github_token, issueNumber, completion);
+      const response = await addComment(inputs.github_token, github.context.issue.number, completion);
       debug('Response', { response });
 
       await writeResponse(response);

@@ -58,23 +58,42 @@ export const isPullRequestCommentEvent = (context: Context): boolean => {
  * @param context
  * @returns
  */
-export const isEventWith = (context: Context, search: string): boolean => {
+// export const isEventWith = (context: Context, search: string): boolean => {
+//   if (isIssueEvent(context)) {
+//     const payload = context.payload as IssuesOpenedEvent;
+//     return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+//   }
+
+//   if (isPullRequestEvent(context)) {
+//     const payload = context.payload as PullRequestOpenedEvent;
+//     return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+//   }
+
+//   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
+//     const payload = context.payload as IssueCommentCreatedEvent;
+//     return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+//   }
+
+//   return false;
+// };
+
+export const getEventPayload = (context: Context): Issue | PullRequest | IssueComment | undefined => {
   if (isIssueEvent(context)) {
     const payload = context.payload as IssuesOpenedEvent;
-    return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
+    return payload.issue;
   }
 
   if (isPullRequestEvent(context)) {
     const payload = context.payload as PullRequestOpenedEvent;
-    return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
+    return payload.pull_request;
   }
 
   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
     const payload = context.payload as IssueCommentCreatedEvent;
-    return payload.comment.body.toLowerCase().includes(search.toLowerCase());
+    return payload.comment;
   }
 
-  return false;
+  return undefined;
 };
 
 /**
@@ -120,7 +139,7 @@ export const writeSummary = async (
   context: Context,
   issue: Issue | PullRequest,
   request: Issue | PullRequest | IssueComment,
-  response: Issue | PullRequest | IssueComment,
+  response: IssueComment,
 ): Promise<void> => {
   await core.summary
     .addLink('Issue', issue.html_url)

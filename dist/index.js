@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addComment = exports.listCommentsBefore = exports.listComments = void 0;
+exports.addComment = exports.listPreviousComments = exports.listCommentsBefore = exports.listComments = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 /**
  * Returns all comments on an issue or pull request.
@@ -66,6 +66,12 @@ const listCommentsBefore = (github_token, issue_number, comment_id) => __awaiter
     return comments.slice(0, index);
 });
 exports.listCommentsBefore = listCommentsBefore;
+const listPreviousComments = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const comments = yield (0, exports.listComments)(github_token, issue_number);
+    const index = comments.findIndex((comment) => comment.id === comment_id);
+    return comments.slice(0, index);
+});
+exports.listPreviousComments = listPreviousComments;
 /**
  * Adds a comment to an issue or pull request.
  * @param github_token
@@ -493,7 +499,7 @@ function run() {
         try {
             (0, utils_1.debug)('Context', { context: github.context });
             if (!(0, utils_1.isEventWith)(github.context, ASSISTANT_HANDLE)) {
-                (0, utils_1.debug)(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
+                (0, utils_1.debug)(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
                 return;
             }
             const inputs = getInputs();

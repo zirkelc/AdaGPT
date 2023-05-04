@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3  
-      # Replace ./ with zirkelc/adapt@v1 to use the action
+      # Replace ./ with zirkelc/adagpt@v1 to use the action
       - uses: ./  
         name: AdaGPT
         with:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3  
-      # Replace ./ with zirkelc/adapt@v1 to use the action
+      # Replace ./ with zirkelc/adagpt@v1 to use the action
       - uses: ./
         name: AdaGPT      
         with:

@@ -34,6 +34,18 @@ export const listCommentsBefore = async (
   return comments.slice(0, index);
 };
 
+export const listPreviousComments = async (
+  github_token: string,
+  issue_number: number,
+  comment_id: number,
+): Promise<IssueComment[]> => {
+  const comments = await listComments(github_token, issue_number);
+
+  const index = comments.findIndex((comment) => comment.id === comment_id);
+
+  return comments.slice(0, index);
+};
+
 /**
  * Adds a comment to an issue or pull request.
  * @param github_token

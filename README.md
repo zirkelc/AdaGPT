@@ -18,7 +18,7 @@ To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your wo
 # File: .github/workflows/adagpt.yml
 name: 'AdaGPT'
 
-# Execute the workflow on new issue comments
+# Run the workflow on new issue comments
 on:
   issue_comment:
     types: [created]
@@ -69,8 +69,9 @@ Add your OpenAI API key as a secret to your repository and reference it using th
 
 # Examples
 
-### [Explain Pull Requests](https://github.com/zirkelc/AdaGPT/pull/1)
-![image](https://user-images.githubusercontent.com/950244/235635340-86ebabad-52fa-4a65-89b9-16e2524638cc.png)
+### [Explain Pull Requests](https://github.com/zirkelc/AdaGPT/pull/2)
+![2023-05-02_18-24-08](https://user-images.githubusercontent.com/950244/235726373-81563bc9-1847-4c0e-8957-ee0f4cfbc6c6.jpg)
+
 ---
 ### [Rock, Paper, Scissors!](https://github.com/zirkelc/AdaGPT/issues/8)
 ![image](https://user-images.githubusercontent.com/950244/235635443-09c893d6-c040-406d-93e6-49752c46b4aa.png)

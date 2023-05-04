@@ -50,7 +50,7 @@ async function run(): Promise<void> {
     debug('Context', { context: github.context });
 
     if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
-      debug(`Event is not an issue comment containing ${ASSISTANT_HANDLE} handle. Skipping...`);
+      debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
       return;
     }
 

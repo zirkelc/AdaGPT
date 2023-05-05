@@ -43,12 +43,10 @@ export async function generateCompletion(
   } catch (error) {
     if (isAxiosError(error)) {
       const response = error.response;
-      if (response?.status === 429) {
-        core.error(
-          'Request to OpenAI failed with status 429. This is due to incorrect billing setup or excessive quota usage. Please follow this guide to fix it: https://help.openai.com/en/articles/6891831-error-code-429-you-exceeded-your-current-quota-please-check-your-plan-and-billing-details',
-        );
-      } else {
-        core.error(`Request to OpenAI failed with status ${response?.status}: ${response?.data?.error?.message}`);
+      core.error(`Request to OpenAI failed with status ${response?.status}: ${response?.data?.error?.message}`);
+
+      if (response?.status) {
+        core.error('API Error Codes: https://help.openai.com/en/collections/3808446-api-error-codes-explained');
       }
     } else {
       const message = error instanceof Error ? error.message : error;

@@ -1,7 +1,13 @@
 name: AdaGPT
 
-# Trigger the workflow on issue comments
 on:
+  # Trigger the workflow on new issues
+  issues:
+    types: [opened]
+  # Trigger the workflow on new pull requests
+  pull_request:
+    types: [opened]
+  # Trigger the workflow on new issue comments    
   issue_comment:
     types: [created]
 
@@ -11,34 +17,56 @@ permissions:
   pull-requests: write
 
 jobs:
+  # This job only runs for pull requests  
+  pr_opened:
+    name: PR opened
+    # Only run the job if the pull request contains @AdaGPT
+    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.body, '@AdaGPT') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+      - uses: ./ 
+        name: AdaGPT
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_key: ${{ secrets.OPENAI_KEY }}  
+  # This job only runs for issues
+  issue_opened:
+    name: Issue opened
+    # Only run the job if the pull request contains @AdaGPT
+    if: ${{ github.event_name == 'issues' && contains(github.event.issue.body, '@AdaGPT') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+      - uses: ./ 
+        name: AdaGPT
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_key: ${{ secrets.OPENAI_KEY }}            
   # This job only runs for pull request comments  
   pr_commented:
     name: PR comment
     # Only run the job if the comment contains @AdaGPT
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
+    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3  
-      # Replace ./ with zirkelc/adagpt@v1 to use the action
-      - uses: ./  
+      - uses: ./ 
         name: AdaGPT
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Reference secrets from the repository settings/secrets/actions
           openai_key: ${{ secrets.OPENAI_KEY }}
 
   # This job only runs for issue comments
   issue_commented:
     name: Issue comment
     # Only run the job if the comment contains @AdaGPT
-    if: ${{ !github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
+    if: ${{ github.event_name == 'issue_comment' && !github.event.issue.pull_request && contains(github.event.comment.body, '@AdaGPT') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3  
-      # Replace ./ with zirkelc/adagpt@v1 to use the action
-      - uses: ./
+      - uses: ./ 
         name: AdaGPT      
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Reference secrets from the repository settings/secrets/actions
           openai_key: ${{ secrets.OPENAI_KEY }}

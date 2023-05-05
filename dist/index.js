@@ -467,7 +467,7 @@ function run() {
             const trigger = (0, utils_1.getEventTrigger)(github.context);
             (0, utils_1.debug)('Trigger', { trigger });
             // check if the event body contains the assistant handle, otherwise skip
-            if (!(trigger === null || trigger === void 0 ? void 0 : trigger.body) || ASSISTANT_REGEX.test(trigger.body)) {
+            if (!(trigger === null || trigger === void 0 ? void 0 : trigger.body) || !ASSISTANT_REGEX.test(trigger.body)) {
                 (0, utils_1.debug)(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
                 return;
             }
@@ -600,11 +600,9 @@ function generateCompletion(openai_key, request) {
         catch (error) {
             if ((0, axios_1.isAxiosError)(error)) {
                 const response = error.response;
-                if ((response === null || response === void 0 ? void 0 : response.status) === 429) {
-                    core.error('Request to OpenAI failed with status 429. This is due to incorrect billing setup or excessive quota usage. Please follow this guide to fix it: https://help.openai.com/en/articles/6891831-error-code-429-you-exceeded-your-current-quota-please-check-your-plan-and-billing-details');
-                }
-                else {
-                    core.error(`Request to OpenAI failed with status ${response === null || response === void 0 ? void 0 : response.status}: ${(_d = (_c = response === null || response === void 0 ? void 0 : response.data) === null || _c === void 0 ? void 0 : _c.error) === null || _d === void 0 ? void 0 : _d.message}`);
+                core.error(`Request to OpenAI failed with status ${response === null || response === void 0 ? void 0 : response.status}: ${(_d = (_c = response === null || response === void 0 ? void 0 : response.data) === null || _c === void 0 ? void 0 : _c.error) === null || _d === void 0 ? void 0 : _d.message}`);
+                if (response === null || response === void 0 ? void 0 : response.status) {
+                    core.error('API Error Codes: https://help.openai.com/en/collections/3808446-api-error-codes-explained');
                 }
             }
             else {

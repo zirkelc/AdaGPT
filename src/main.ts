@@ -45,7 +45,7 @@ async function run(): Promise<void> {
     debug('Trigger', { trigger });
 
     // check if the event body contains the assistant handle, otherwise skip
-    if (!trigger?.body || ASSISTANT_REGEX.test(trigger.body)) {
+    if (!trigger?.body || !ASSISTANT_REGEX.test(trigger.body)) {
       debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
       return;
     }

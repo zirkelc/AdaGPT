@@ -255,8 +255,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.debug = exports.writeContext = exports.writeResponse = exports.writeRequest = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.getEventPayload = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
+exports.debug = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.getEventTrigger = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
 /**
  * Returns true if the event originated from an issue event.
  * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues
@@ -302,28 +303,15 @@ const isPullRequestCommentEvent = (context) => {
 };
 exports.isPullRequestCommentEvent = isPullRequestCommentEvent;
 /**
- * Returns true if the event paylod contains the search string.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+ * Returns the object that triggered the event.
+ * If it's an issue event, returns the issue.
+ * If it's a pull request event, returns the pull request.
+ * If it's a comment event, returns the comment.
+ * If it's none of the above, returns undefined.
  * @param context
  * @returns
  */
-// export const isEventWith = (context: Context, search: string): boolean => {
-//   if (isIssueEvent(context)) {
-//     const payload = context.payload as IssuesOpenedEvent;
-//     return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
-//   }
-//   if (isPullRequestEvent(context)) {
-//     const payload = context.payload as PullRequestOpenedEvent;
-//     return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
-//   }
-//   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
-//     const payload = context.payload as IssueCommentCreatedEvent;
-//     return payload.comment.body.toLowerCase().includes(search.toLowerCase());
-//   }
-//   return false;
-// };
-const getEventPayload = (context) => {
+const getEventTrigger = (context) => {
     if ((0, exports.isIssueEvent)(context)) {
         const payload = context.payload;
         return payload.issue;
@@ -338,7 +326,7 @@ const getEventPayload = (context) => {
     }
     return undefined;
 };
-exports.getEventPayload = getEventPayload;
+exports.getEventTrigger = getEventTrigger;
 /**
  * Returns the issue number from the event payload.
  * Throws an error if the event is not an issue, pull request, or comment.
@@ -374,7 +362,7 @@ exports.getRepo = getRepo;
  * Writes a summary of the request and response to the job log.
  * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
  */
-const writeSummary = (context, issue, request, response) => __awaiter(void 0, void 0, void 0, function* () {
+const writeSummary = (issue, request, response) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     yield core.summary
         .addLink('Issue', issue.html_url)
@@ -388,49 +376,10 @@ const writeSummary = (context, issue, request, response) => __awaiter(void 0, vo
         .addLink('Comment', response.html_url)
         .addBreak()
         .addHeading('GitHub Context', 3)
-        .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
+        .addCodeBlock(JSON.stringify(github.context.payload, null, 2), 'json')
         .write();
 });
 exports.writeSummary = writeSummary;
-/**
- * Writes a summary of the request to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-const writeRequest = (request) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    yield core.summary
-        .addHeading('Request', 3)
-        .addRaw((_c = request.body) !== null && _c !== void 0 ? _c : '', true)
-        .addBreak()
-        .addLink('Link', request.html_url)
-        .write();
-});
-exports.writeRequest = writeRequest;
-/**
- * Writes a summary of the response to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-const writeResponse = (response) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
-    yield core.summary
-        .addHeading('Response', 3)
-        .addRaw((_d = response.body) !== null && _d !== void 0 ? _d : '', true)
-        .addBreak()
-        .addLink('Link', response.html_url)
-        .write();
-});
-exports.writeResponse = writeResponse;
-/**
- * Writes a summary of context to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-const writeContext = (context) => __awaiter(void 0, void 0, void 0, function* () {
-    yield core.summary
-        .addHeading('GitHub Context', 3)
-        .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
-        .write();
-});
-exports.writeContext = writeContext;
 /**
  * Print a debug message with optional an object.
  * @param message
@@ -513,52 +462,62 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             (0, utils_1.debug)('Context', { context: github.context });
-            const request = (0, utils_1.getEventPayload)(github.context);
-            if (!(request === null || request === void 0 ? void 0 : request.body) || ASSISTANT_REGEX.test(request.body)) {
+            // get the event object that triggered the workflow
+            // this can be an issue, pull request, or comment
+            const trigger = (0, utils_1.getEventTrigger)(github.context);
+            (0, utils_1.debug)('Trigger', { trigger });
+            // check if the event body contains the assistant handle, otherwise skip
+            if (!(trigger === null || trigger === void 0 ? void 0 : trigger.body) || ASSISTANT_REGEX.test(trigger.body)) {
                 (0, utils_1.debug)(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
                 return;
             }
-            // if (!isEventWith(github.context, ASSISTANT_HANDLE)) {
-            //   debug(`Event doesn't contain ${ASSISTANT_HANDLE}. Skipping...`);
-            //   return;
-            // }
+            // get the inputs for the action
             const inputs = getInputs();
             (0, utils_1.debug)('Inputs', { inputs });
-            // const issueNumber = getIssueNumber(github.context);
-            // const iss = github.context.issue.number;
-            // debug('Issue number', { issueNumber });
+            // read the issue or pull request from the GitHub API
             const issue = yield (0, issues_1.getIssue)(inputs.github_token, github.context.issue.number);
             (0, utils_1.debug)('Issue', { issue });
+            // get the repository information
             const repo = github.context.repo;
-            const assistant = { handle: ASSISTANT_HANDLE, name: ASSISTANT_NAME };
-            const prompt = [...(0, prompts_1.initAssistant)(assistant)];
+            // initialize the prompt with the assistant name and handle
+            const prompt = [...(0, prompts_1.initAssistant)(ASSISTANT_NAME, ASSISTANT_HANDLE)];
+            // the prompt for issues and pull requests is only slightly different
+            // but the diff might be very long and we may have to exlude it in the future
             if (issue.pull_request) {
+                // get the diff for the pull request
                 const diff = yield (0, pulls_1.getPullRequestDiff)(inputs.github_token, github.context.issue.number);
                 (0, utils_1.debug)('Diff', { diff });
+                // add pull request and diff to the prompt
                 prompt.push(...(0, prompts_1.initPullRequest)(repo, issue, diff));
             }
             else {
+                // add issue to the prompt
                 prompt.push(...(0, prompts_1.initIssue)(repo, issue));
             }
+            // prompt for comments is the same for issues and pull requests
             if (github.context.eventName === 'issue_comment') {
+                // get the comment that triggered the workflow and all comments before it
                 const { comment } = github.context.payload;
+                // get the comments before the current one that triggered the workflow
+                // the workflow execution may be delayed, so we need to make sure we don't get comments after the current one
                 const comments = yield (0, comment_1.listCommentsBefore)(inputs.github_token, github.context.issue.number, comment.id);
-                prompt.push(...(0, prompts_1.initPreviousComments)(issue, comments));
+                // add the current comment to the end of the comments
+                prompt.push(...(0, prompts_1.initComments)([...comments, comment]));
             }
             (0, utils_1.debug)('Prompt', { prompt });
-            if (prompt.length > 0) {
-                // TODO handle max tokens limit
-                const completion = yield (0, openai_1.generateCompletion)(inputs.openai_key, {
-                    messages: prompt,
-                    temperature: inputs.openai_temperature,
-                    top_p: inputs.openai_top_p,
-                    max_tokens: inputs.openai_max_tokens,
-                });
-                const response = yield (0, comment_1.addComment)(inputs.github_token, github.context.issue.number, completion);
-                (0, utils_1.debug)('Response', { response });
-                yield (0, utils_1.writeResponse)(response);
-            }
-            yield (0, utils_1.writeContext)(github.context);
+            // TODO handle max tokens limit
+            // generate the completion from the prompt
+            const completion = yield (0, openai_1.generateCompletion)(inputs.openai_key, {
+                messages: prompt,
+                temperature: inputs.openai_temperature,
+                top_p: inputs.openai_top_p,
+                max_tokens: inputs.openai_max_tokens,
+            });
+            // add the response as a comment to the issue or pull request
+            const response = yield (0, comment_1.addComment)(inputs.github_token, github.context.issue.number, completion);
+            (0, utils_1.debug)('Response', { response });
+            // write a summary of the trigger and response to the job log
+            (0, utils_1.writeSummary)(issue, trigger, response);
         }
         catch (error) {
             if (error instanceof Error)
@@ -667,16 +626,16 @@ exports.generateCompletion = generateCompletion;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.initPreviousComments = exports.initPullRequest = exports.initIssue = exports.initAssistant = void 0;
+exports.initComments = exports.initPullRequest = exports.initIssue = exports.initAssistant = void 0;
 const openai_1 = __nccwpck_require__(9211);
 const utils_1 = __nccwpck_require__(8483);
-const initAssistant = (assistant) => {
+const initAssistant = (name, handle) => {
     return [
         {
             role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
             content: [
                 `You are a helpful assistant for GitHub issues and pull requests.`,
-                `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
+                `Your name is ${name} and your handle is ${handle}.`,
                 `You respond to comments when someone mentions you.`,
             ].join('\n'),
         },
@@ -690,8 +649,11 @@ const initIssue = (repo, issue) => {
             content: [
                 `The current issue was created by ${(0, utils_1.escapeUser)(issue.user.login)} in repository ${repo.repo}.`,
                 `Issue number: ${issue.number}`,
-                `Issue title: ${issue.title}`,
-                `Issue description: ${issue.body}`,
+                `Issue title: \`${issue.title}\``,
+                `Issue description:`,
+                '```',
+                issue.body,
+                '```',
             ].join('\n'),
         },
     ];
@@ -704,9 +666,11 @@ const initPullRequest = (repo, issue, diff) => {
             content: [
                 `The current pull request was created by ${(0, utils_1.escapeUser)(issue.user.login)} in repository ${repo.repo}.`,
                 `Pull request number: ${issue.number}`,
-                `Pull request title: ${issue.title}`,
+                `Pull request title: \`${issue.title}\``,
                 `Pull request description:`,
+                '```',
                 issue.body,
+                '```',
             ].join('\n'),
         },
         {
@@ -716,7 +680,7 @@ const initPullRequest = (repo, issue, diff) => {
     ];
 };
 exports.initPullRequest = initPullRequest;
-const initPreviousComments = (issue, comments) => {
+const initComments = (comments) => {
     return comments.length === 0
         ? []
         : [
@@ -736,24 +700,7 @@ const initPreviousComments = (issue, comments) => {
                 }),
         ];
 };
-exports.initPreviousComments = initPreviousComments;
-// export const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
-//   return [
-//     {
-//       role: ChatCompletionRequestMessageRoleEnum.User,
-//       name: escapeUser(comment.user.login),
-//       content: unescapeComment(comment.body),
-//     },
-//     {
-//       role: ChatCompletionRequestMessageRoleEnum.System,
-//       content: [
-//         `The last comment was made by ${escapeUser(comment.user.login)}.`,
-//         `This comment activated you, so you should respond to it.`,
-//       ].join('\n'),
-//     },
-//   ];
-// };
-// export const getActivationPrompt = (): ChatCompletionRequestMessage[] => {};
+exports.initComments = initComments;
 
 
 /***/ }),

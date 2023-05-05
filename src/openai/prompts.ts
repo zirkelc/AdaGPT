@@ -3,18 +3,13 @@ import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } fr
 import { Repo } from '../github/utils';
 import { escapeUser, isCommentByAssistant, unescapeComment } from './utils';
 
-type Assistant = {
-  name: string;
-  handle: string;
-};
-
-export const initAssistant = (assistant: Assistant): ChatCompletionRequestMessage[] => {
+export const initAssistant = (name: string, handle: string): ChatCompletionRequestMessage[] => {
   return [
     {
       role: ChatCompletionRequestMessageRoleEnum.System,
       content: [
         `You are a helpful assistant for GitHub issues and pull requests.`,
-        `Your name is "${assistant.name}" and your handle is ${assistant.handle}.`,
+        `Your name is ${name} and your handle is ${handle}.`,
         `You respond to comments when someone mentions you.`,
       ].join('\n'),
     },
@@ -28,8 +23,11 @@ export const initIssue = (repo: Repo, issue: Issue): ChatCompletionRequestMessag
       content: [
         `The current issue was created by ${escapeUser(issue.user.login)} in repository ${repo.repo}.`,
         `Issue number: ${issue.number}`,
-        `Issue title: ${issue.title}`,
-        `Issue description: ${issue.body}`,
+        `Issue title: \`${issue.title}\``,
+        `Issue description:`,
+        '```',
+        issue.body,
+        '```',
       ].join('\n'),
     },
   ];
@@ -46,9 +44,11 @@ export const initPullRequest = (
       content: [
         `The current pull request was created by ${escapeUser(issue.user.login)} in repository ${repo.repo}.`,
         `Pull request number: ${issue.number}`,
-        `Pull request title: ${issue.title}`,
+        `Pull request title: \`${issue.title}\``,
         `Pull request description:`,
+        '```',
         issue.body,
+        '```',
       ].join('\n'),
     },
     {
@@ -58,7 +58,7 @@ export const initPullRequest = (
   ];
 };
 
-export const initPreviousComments = (issue: Issue, comments: IssueComment[]): ChatCompletionRequestMessage[] => {
+export const initComments = (comments: IssueComment[]): ChatCompletionRequestMessage[] => {
   return comments.length === 0
     ? []
     : [
@@ -80,22 +80,3 @@ export const initPreviousComments = (issue: Issue, comments: IssueComment[]): Ch
         ),
       ];
 };
-
-// export const initRequestComment = (issue: Issue, comment: IssueComment): ChatCompletionRequestMessage[] => {
-//   return [
-//     {
-//       role: ChatCompletionRequestMessageRoleEnum.User,
-//       name: escapeUser(comment.user.login),
-//       content: unescapeComment(comment.body),
-//     },
-//     {
-//       role: ChatCompletionRequestMessageRoleEnum.System,
-//       content: [
-//         `The last comment was made by ${escapeUser(comment.user.login)}.`,
-//         `This comment activated you, so you should respond to it.`,
-//       ].join('\n'),
-//     },
-//   ];
-// };
-
-// export const getActivationPrompt = (): ChatCompletionRequestMessage[] => {};

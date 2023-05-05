@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { Context } from '@actions/github/lib/context';
 import {
   Issue,
@@ -52,32 +53,15 @@ export const isPullRequestCommentEvent = (context: Context): boolean => {
 };
 
 /**
- * Returns true if the event paylod contains the search string.
- * @see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
- * @see https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+ * Returns the object that triggered the event.
+ * If it's an issue event, returns the issue.
+ * If it's a pull request event, returns the pull request.
+ * If it's a comment event, returns the comment.
+ * If it's none of the above, returns undefined.
  * @param context
  * @returns
  */
-// export const isEventWith = (context: Context, search: string): boolean => {
-//   if (isIssueEvent(context)) {
-//     const payload = context.payload as IssuesOpenedEvent;
-//     return !!payload.issue.body && payload.issue.body.toLowerCase().includes(search.toLowerCase());
-//   }
-
-//   if (isPullRequestEvent(context)) {
-//     const payload = context.payload as PullRequestOpenedEvent;
-//     return !!payload.pull_request.body && payload.pull_request.body.toLowerCase().includes(search.toLowerCase());
-//   }
-
-//   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
-//     const payload = context.payload as IssueCommentCreatedEvent;
-//     return payload.comment.body.toLowerCase().includes(search.toLowerCase());
-//   }
-
-//   return false;
-// };
-
-export const getEventPayload = (context: Context): Issue | PullRequest | IssueComment | undefined => {
+export const getEventTrigger = (context: Context): Issue | PullRequest | IssueComment | undefined => {
   if (isIssueEvent(context)) {
     const payload = context.payload as IssuesOpenedEvent;
     return payload.issue;
@@ -136,7 +120,6 @@ export const getRepo = (): Repo => {
  * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
  */
 export const writeSummary = async (
-  context: Context,
   issue: Issue | PullRequest,
   request: Issue | PullRequest | IssueComment,
   response: IssueComment,
@@ -153,44 +136,7 @@ export const writeSummary = async (
     .addLink('Comment', response.html_url)
     .addBreak()
     .addHeading('GitHub Context', 3)
-    .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
-    .write();
-};
-
-/**
- * Writes a summary of the request to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-export const writeRequest = async (request: Issue | PullRequest | IssueComment): Promise<void> => {
-  await core.summary
-    .addHeading('Request', 3)
-    .addRaw(request.body ?? '', true)
-    .addBreak()
-    .addLink('Link', request.html_url)
-    .write();
-};
-
-/**
- * Writes a summary of the response to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-export const writeResponse = async (response: Issue | PullRequest | IssueComment): Promise<void> => {
-  await core.summary
-    .addHeading('Response', 3)
-    .addRaw(response.body ?? '', true)
-    .addBreak()
-    .addLink('Link', response.html_url)
-    .write();
-};
-
-/**
- * Writes a summary of context to the job log.
- * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
- */
-export const writeContext = async (context: Context): Promise<void> => {
-  await core.summary
-    .addHeading('GitHub Context', 3)
-    .addCodeBlock(JSON.stringify(context.payload, null, 2), 'json')
+    .addCodeBlock(JSON.stringify(github.context.payload, null, 2), 'json')
     .write();
 };
 

@@ -54,7 +54,6 @@ export const unescapeComment = (comment: string): string => {
  */
 export const escapeUser = (user: string): string => {
   // Remove [bot] from the end of the login name.
-  user = user.endsWith('[bot]') ? user.slice(0, -5) : user;
   // Remove all characters except a-z, A-Z, 0-9, _ and -.
   return user.replace('[bot]', '').replace(/[^a-zA-Z0-9_-]/g, '');
 };

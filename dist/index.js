@@ -1,100 +1,6 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3456:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addComment = exports.listPreviousComments = exports.listCommentsBefore = exports.listComments = void 0;
-const github = __importStar(__nccwpck_require__(5438));
-/**
- * Returns all comments on an issue or pull request.
- * @param github_token
- * @param issue_number
- * @returns
- */
-const listComments = (github_token, issue_number) => __awaiter(void 0, void 0, void 0, function* () {
-    const { owner, repo } = github.context.repo;
-    const octokit = github.getOctokit(github_token);
-    // pagination: https://github.com/octokit/octokit.js#pagination
-    const comments = yield octokit.paginate(octokit.rest.issues.listComments, {
-        owner,
-        repo,
-        issue_number,
-        per_page: 100,
-    });
-    return comments;
-});
-exports.listComments = listComments;
-const listCommentsBefore = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
-    const comments = yield (0, exports.listComments)(github_token, issue_number);
-    const index = comments.findIndex((c) => c.id === comment_id);
-    return comments.slice(0, index);
-});
-exports.listCommentsBefore = listCommentsBefore;
-const listPreviousComments = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
-    const comments = yield (0, exports.listComments)(github_token, issue_number);
-    const index = comments.findIndex((comment) => comment.id === comment_id);
-    return comments.slice(0, index);
-});
-exports.listPreviousComments = listPreviousComments;
-/**
- * Adds a comment to an issue or pull request.
- * @param github_token
- * @param issue_number
- * @param body
- * @returns
- */
-const addComment = (github_token, issue_number, body) => __awaiter(void 0, void 0, void 0, function* () {
-    const { owner, repo } = github.context.repo;
-    const octokit = github.getOctokit(github_token);
-    const comment = yield octokit.rest.issues.createComment({
-        owner,
-        repo,
-        issue_number,
-        body,
-    });
-    return comment.data;
-});
-exports.addComment = addComment;
-
-
-/***/ }),
-
 /***/ 2699:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -133,8 +39,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getIssue = void 0;
+exports.addComment = exports.listCommentsBefore = exports.listComments = exports.getIssue = void 0;
 const github = __importStar(__nccwpck_require__(5438));
+/**
+ * Returns an issue or pull request for the given issue number.
+ * @param github_token
+ * @param issue_number
+ * @returns
+ */
 const getIssue = (github_token, issue_number) => __awaiter(void 0, void 0, void 0, function* () {
     const { owner, repo } = github.context.repo;
     const octokit = github.getOctokit(github_token);
@@ -146,6 +58,50 @@ const getIssue = (github_token, issue_number) => __awaiter(void 0, void 0, void 
     return issue;
 });
 exports.getIssue = getIssue;
+/**
+ * Returns all comments on an issue or pull request.
+ * @param github_token
+ * @param issue_number
+ * @returns
+ */
+const listComments = (github_token, issue_number) => __awaiter(void 0, void 0, void 0, function* () {
+    const { owner, repo } = github.context.repo;
+    const octokit = github.getOctokit(github_token);
+    // pagination: https://github.com/octokit/octokit.js#pagination
+    const comments = yield octokit.paginate(octokit.rest.issues.listComments, {
+        owner,
+        repo,
+        issue_number,
+        per_page: 100,
+    });
+    return comments;
+});
+exports.listComments = listComments;
+const listCommentsBefore = (github_token, issue_number, comment_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const comments = yield (0, exports.listComments)(github_token, issue_number);
+    const index = comments.findIndex((c) => c.id === comment_id);
+    return comments.slice(0, index);
+});
+exports.listCommentsBefore = listCommentsBefore;
+/**
+ * Adds a comment to an issue or pull request to the given issue number.
+ * @param github_token
+ * @param issue_number
+ * @param body
+ * @returns
+ */
+const addComment = (github_token, issue_number, body) => __awaiter(void 0, void 0, void 0, function* () {
+    const { owner, repo } = github.context.repo;
+    const octokit = github.getOctokit(github_token);
+    const comment = yield octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number,
+        body,
+    });
+    return comment.data;
+});
+exports.addComment = addComment;
 
 
 /***/ }),
@@ -255,7 +211,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.debug = exports.writeSummary = exports.getRepo = exports.getIssueNumber = exports.getEventTrigger = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
+exports.debug = exports.writeSummary = exports.getIssueNumber = exports.getEventTrigger = exports.isPullRequestCommentEvent = exports.isIssueCommentEvent = exports.isPullRequestEvent = exports.isIssueEvent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 /**
@@ -350,15 +306,6 @@ const getIssueNumber = (context) => {
 };
 exports.getIssueNumber = getIssueNumber;
 /**
- * Returns the owner and name of the repository.
- * @returns
- */
-const getRepo = () => {
-    const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
-    return { owner, repo };
-};
-exports.getRepo = getRepo;
-/**
  * Writes a summary of the request and response to the job log.
  * @see https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
  */
@@ -433,9 +380,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const comment_1 = __nccwpck_require__(3456);
 const issues_1 = __nccwpck_require__(2699);
 const pulls_1 = __nccwpck_require__(8808);
 const utils_1 = __nccwpck_require__(1520);
@@ -500,7 +447,7 @@ function run() {
                 const { comment } = github.context.payload;
                 // get the comments before the current one that triggered the workflow
                 // the workflow execution may be delayed, so we need to make sure we don't get comments after the current one
-                const comments = yield (0, comment_1.listCommentsBefore)(inputs.github_token, github.context.issue.number, comment.id);
+                const comments = yield (0, issues_1.listCommentsBefore)(inputs.github_token, github.context.issue.number, comment.id);
                 // add the current comment to the end of the comments
                 prompt.push(...(0, prompts_1.initComments)([...comments, comment]));
             }
@@ -514,7 +461,7 @@ function run() {
                 max_tokens: inputs.openai_max_tokens,
             });
             // add the response as a comment to the issue or pull request
-            const response = yield (0, comment_1.addComment)(inputs.github_token, github.context.issue.number, completion);
+            const response = yield (0, issues_1.addComment)(inputs.github_token, github.context.issue.number, completion);
             (0, utils_1.debug)('Response', { response });
             // write a summary of the trigger and response to the job log
             (0, utils_1.writeSummary)(issue, trigger, response);
@@ -525,6 +472,7 @@ function run() {
         }
     });
 }
+exports.run = run;
 run();
 
 
@@ -764,7 +712,6 @@ exports.unescapeComment = unescapeComment;
  */
 const escapeUser = (user) => {
     // Remove [bot] from the end of the login name.
-    user = user.endsWith('[bot]') ? user.slice(0, -5) : user;
     // Remove all characters except a-z, A-Z, 0-9, _ and -.
     return user.replace('[bot]', '').replace(/[^a-zA-Z0-9_-]/g, '');
 };

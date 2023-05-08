@@ -11,15 +11,19 @@ To use AdaGPT, you'll need to create an OpenAI API key and add AdaGPT to your wo
 
 1. Create an [OpenAI API key](https://platform.openai.com/account/api-keys) if you don't already have one. Keep in mind that you'll occur charges for using the API.
 2. Save your OpenAI API key as a [Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) in your repository.
-3. Create a new workflow in folder `.github/workflows` that will be executed for [new comments](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment) on issues and pull requests.
+3. Create a new workflow in folder `.github/workflows` that will be triggered on [issues](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues), [pull requests](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request) and [comments](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment).
 
 ### Workflow
 ```yaml
 # File: .github/workflows/adagpt.yml
 name: 'AdaGPT'
 
-# Run the workflow on new issue comments
+# Run the workflow on new issues, pull requests and comments
 on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
   issue_comment:
     types: [created]
 
@@ -29,13 +33,13 @@ permissions:
   pull-requests: write
 
 jobs:
-  issue_comment:
-    # Only run the job if the comment contains @AdaGPT (this will also be checked implicitly by the action again)
-    if: ${{ github.event.comment && contains(github.event.comment.body, '@AdaGPT') }}    
-    name: Issue and PR comments
+  # Runs for issues, pull requests and comments
+  adagpt:
+    name: AdaGPT comment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3  
+      # The action will only run if the description or comments mentions @AdaGPT
       - uses: zirkelc/adagpt@v1
         name: AdaGPT
         with:
@@ -43,7 +47,26 @@ jobs:
           openai_key: ${{ secrets.OPENAI_KEY }}
 ```
 
-Check out [`main.yml`](./.github/workflows/main.yml) for a working demo.
+The action will only run if the issue, pull requests or comments mentions `@AdaGPT`. Otherwise, the action will return immediately without doing anything. If you want to skip the whole workflow run, you can use the [`if` conditional](https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#jobsjob_idif) to check if the issue, pull request or comment mentions `@AdaGPT`.
+
+```yml
+jobs:
+  # Runs only for issues
+  issue:
+    name: Issue opened
+    # Check if the issue contains @AdaGPT, otherwise skip the workflow run
+    if: ${{ github.event_name == 'issues' && contains(github.event.issue.body, '@AdaGPT') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+      - uses: zirkelc/adagpt@v1
+        name: AdaGPT
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_key: ${{ secrets.OPENAI_KEY }}     
+```
+
+Check out [`main.yml`](./.github/workflows/main.yml) for more examples. 
 
 ### Permissions
 The `GITHUB_TOKEN` requires the following permissions to create comments on issues and pull requests:

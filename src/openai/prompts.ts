@@ -1,4 +1,4 @@
-import { Issue, IssueComment, PullRequest } from '@octokit/webhooks-types';
+import type { Issue, IssueComment, PullRequest } from '@octokit/webhooks-types';
 import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from 'openai';
 import { Repo } from '../github/utils';
 import { escapeUser, isCommentByAssistant, unescapeComment } from './utils';

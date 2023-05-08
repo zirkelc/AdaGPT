@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { Context } from '@actions/github/lib/context';
-import {
+import type {
   Issue,
   IssueComment,
   IssueCommentCreatedEvent,
@@ -9,6 +9,8 @@ import {
   PullRequest,
   PullRequestOpenedEvent,
 } from '@octokit/webhooks-types';
+
+export type Repo = Context['repo'];
 
 /**
  * Returns true if the event originated from an issue event.
@@ -103,16 +105,6 @@ export const getIssueNumber = (context: Context): number => {
   }
 
   throw new Error(`Could not determine issue number from event "${context.eventName}"`);
-};
-
-export type Repo = { owner: string; repo: string };
-/**
- * Returns the owner and name of the repository.
- * @returns
- */
-export const getRepo = (): Repo => {
-  const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
-  return { owner, repo };
 };
 
 /**

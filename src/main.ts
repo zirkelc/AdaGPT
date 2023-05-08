@@ -1,8 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type { IssueCommentCreatedEvent } from '@octokit/webhooks-types';
-import { addComment, listCommentsBefore } from './github/comment';
-import { getIssue } from './github/issues';
+import { addComment, listCommentsBefore, getIssue } from './github/issues';
 import { getPullRequestDiff } from './github/pulls';
 import { debug, getEventTrigger, writeSummary } from './github/utils';
 import { generateCompletion } from './openai/openai';
@@ -35,7 +34,7 @@ const getInputs = (): Inputs => ({
   openai_max_tokens: parseInt(core.getInput('openai_max_tokens')),
 });
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     debug('Context', { context: github.context });
 

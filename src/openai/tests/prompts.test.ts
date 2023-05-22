@@ -1,4 +1,4 @@
-import { initAssistant, initIssue, initPullRequest, initComments } from '../prompts';
+import { initAssistant, initIssue, initPullRequest, initComments } from '../prompts'
 
 describe('initAssistant', () => {
   test('returns a chat completion request message', () => {
@@ -11,16 +11,16 @@ describe('initAssistant', () => {
           "role": "system",
         },
       ]
-    `);
-  });
-});
+    `)
+  })
+})
 
 describe('initIssue', () => {
   test('returns a chat completion request message', () => {
     const repo = {
       owner: 'octocat',
       repo: 'Hello-World',
-    };
+    }
     const issue = {
       user: {
         login: 'johndoe',
@@ -28,7 +28,7 @@ describe('initIssue', () => {
       number: 42,
       title: 'Example Issue',
       body: 'This is an example issue.',
-    } as any;
+    } as any
     expect(initIssue(repo, issue)).toMatchInlineSnapshot(`
       [
         {
@@ -42,16 +42,16 @@ describe('initIssue', () => {
           "role": "system",
         },
       ]
-    `);
-  });
-});
+    `)
+  })
+})
 
 describe('initPullRequest', () => {
   test('returns a chat completion request message', () => {
     const repo = {
       owner: 'octocat',
       repo: 'Hello-World',
-    };
+    }
     const pullRequest = {
       user: {
         login: 'johndoe',
@@ -59,9 +59,9 @@ describe('initPullRequest', () => {
       number: 42,
       title: 'Example Pull Request',
       body: 'This is an example pull request.',
-    } as any;
+    } as any
     const diff =
-      'diff --git a/file1 b/file1\nindex 0000001..0000002 100644\n--- a/file1\n+++ b/file1\n@@ -1,3 +1,4 @@\n+line4\n line1\n line2\n line3';
+      'diff --git a/file1 b/file1\nindex 0000001..0000002 100644\n--- a/file1\n+++ b/file1\n@@ -1,3 +1,4 @@\n+line4\n line1\n line2\n line3'
     expect(initPullRequest(repo, pullRequest, diff)).toMatchInlineSnapshot(`
       [
         {
@@ -88,14 +88,14 @@ describe('initPullRequest', () => {
           "role": "system",
         },
       ]
-    `);
-  });
-});
+    `)
+  })
+})
 
 describe('initComments', () => {
   test('returns empty array for empty comments', () => {
-    expect(initComments([])).toMatchInlineSnapshot(`[]`);
-  });
+    expect(initComments([])).toMatchInlineSnapshot(`[]`)
+  })
 
   test('returns chat completion request messages for comments', () => {
     const comments = [
@@ -123,7 +123,7 @@ describe('initComments', () => {
           login: 'janedoe',
         },
       },
-    ] as any;
+    ] as any
     expect(initComments(comments)).toMatchInlineSnapshot(`
       [
         {
@@ -151,6 +151,6 @@ describe('initComments', () => {
           "role": "user",
         },
       ]
-    `);
-  });
-});
+    `)
+  })
+})

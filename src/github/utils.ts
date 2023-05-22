@@ -1,6 +1,6 @@
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import { Context } from '@actions/github/lib/context';
+import * as core from '@actions/core'
+import * as github from '@actions/github'
+import { Context } from '@actions/github/lib/context'
 import type {
   Issue,
   IssueComment,
@@ -8,9 +8,9 @@ import type {
   IssuesOpenedEvent,
   PullRequest,
   PullRequestOpenedEvent,
-} from '@octokit/webhooks-types';
+} from '@octokit/webhooks-types'
 
-export type Repo = Context['repo'];
+export type Repo = Context['repo']
 
 /**
  * Returns true if the event originated from an issue event.
@@ -19,8 +19,8 @@ export type Repo = Context['repo'];
  * @returns
  */
 export const isIssueEvent = (context: Context): boolean => {
-  return context.eventName === 'issues';
-};
+  return context.eventName === 'issues'
+}
 
 /**
  * Returns true if the event originated from a pull request event.
@@ -29,8 +29,8 @@ export const isIssueEvent = (context: Context): boolean => {
  * @returns
  */
 export const isPullRequestEvent = (context: Context): boolean => {
-  return context.eventName === 'pull_request';
-};
+  return context.eventName === 'pull_request'
+}
 
 /**
  * Returns true if the event originated from an issue comment.
@@ -40,8 +40,8 @@ export const isPullRequestEvent = (context: Context): boolean => {
  * @returns
  */
 export const isIssueCommentEvent = (context: Context): boolean => {
-  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request === undefined;
-};
+  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request === undefined
+}
 
 /**
  * Returns true if the event originated from a pull request comment.
@@ -51,8 +51,8 @@ export const isIssueCommentEvent = (context: Context): boolean => {
  * @returns
  */
 export const isPullRequestCommentEvent = (context: Context): boolean => {
-  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request !== undefined;
-};
+  return context.eventName === 'issue_comment' && context.payload.issue?.pull_request !== undefined
+}
 
 /**
  * Returns the object that triggered the event.
@@ -65,22 +65,22 @@ export const isPullRequestCommentEvent = (context: Context): boolean => {
  */
 export const getEventTrigger = (context: Context): Issue | PullRequest | IssueComment | undefined => {
   if (isIssueEvent(context)) {
-    const payload = context.payload as IssuesOpenedEvent;
-    return payload.issue;
+    const payload = context.payload as IssuesOpenedEvent
+    return payload.issue
   }
 
   if (isPullRequestEvent(context)) {
-    const payload = context.payload as PullRequestOpenedEvent;
-    return payload.pull_request;
+    const payload = context.payload as PullRequestOpenedEvent
+    return payload.pull_request
   }
 
   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
-    const payload = context.payload as IssueCommentCreatedEvent;
-    return payload.comment;
+    const payload = context.payload as IssueCommentCreatedEvent
+    return payload.comment
   }
 
-  return undefined;
-};
+  return undefined
+}
 
 /**
  * Returns the issue number from the event payload.
@@ -90,22 +90,22 @@ export const getEventTrigger = (context: Context): Issue | PullRequest | IssueCo
  */
 export const getIssueNumber = (context: Context): number => {
   if (isIssueEvent(context)) {
-    const payload = context.payload as IssuesOpenedEvent;
-    return payload.issue.number;
+    const payload = context.payload as IssuesOpenedEvent
+    return payload.issue.number
   }
 
   if (isPullRequestEvent(context)) {
-    const payload = context.payload as PullRequestOpenedEvent;
-    return payload.pull_request.number;
+    const payload = context.payload as PullRequestOpenedEvent
+    return payload.pull_request.number
   }
 
   if (isIssueCommentEvent(context) || isPullRequestCommentEvent(context)) {
-    const payload = context.payload as IssueCommentCreatedEvent;
-    return payload.issue.number;
+    const payload = context.payload as IssueCommentCreatedEvent
+    return payload.issue.number
   }
 
-  throw new Error(`Could not determine issue number from event "${context.eventName}"`);
-};
+  throw new Error(`Could not determine issue number from event "${context.eventName}"`)
+}
 
 /**
  * Writes a summary of the request and response to the job log.
@@ -129,8 +129,8 @@ export const writeSummary = async (
     .addBreak()
     .addHeading('GitHub Context', 3)
     .addCodeBlock(JSON.stringify(github.context.payload, null, 2), 'json')
-    .write();
-};
+    .write()
+}
 
 /**
  * Print a debug message with optional an object.
@@ -138,6 +138,6 @@ export const writeSummary = async (
  * @param obj
  */
 export const debug = (message: string, obj?: Record<string, unknown>): void => {
-  core.debug(message);
-  if (obj !== undefined) core.debug(JSON.stringify(obj, null, 2));
-};
+  core.debug(message)
+  if (obj !== undefined) core.debug(JSON.stringify(obj, null, 2))
+}

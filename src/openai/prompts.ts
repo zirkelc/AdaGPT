@@ -1,7 +1,7 @@
-import type { Issue, IssueComment, PullRequest } from '@octokit/webhooks-types';
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from 'openai';
-import { Repo } from '../github/utils';
-import { escapeUser, isCommentByAssistant, unescapeComment } from './utils';
+import type { Issue, IssueComment, PullRequest } from '@octokit/webhooks-types'
+import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from 'openai'
+import { Repo } from '../github/utils'
+import { escapeUser, isCommentByAssistant, unescapeComment } from './utils'
 
 export const initAssistant = (name: string, handle: string): ChatCompletionRequestMessage[] => {
   return [
@@ -13,8 +13,8 @@ export const initAssistant = (name: string, handle: string): ChatCompletionReque
         `You respond to comments when someone mentions you.`,
       ].join('\n'),
     },
-  ];
-};
+  ]
+}
 
 export const initIssue = (repo: Repo, issue: Issue): ChatCompletionRequestMessage[] => {
   return [
@@ -30,8 +30,8 @@ export const initIssue = (repo: Repo, issue: Issue): ChatCompletionRequestMessag
         '```',
       ].join('\n'),
     },
-  ];
-};
+  ]
+}
 
 export const initPullRequest = (
   repo: Repo,
@@ -55,8 +55,8 @@ export const initPullRequest = (
       role: ChatCompletionRequestMessageRoleEnum.System,
       content: [`Git diff:`, diff].join('\n'),
     },
-  ];
-};
+  ]
+}
 
 export const initComments = (comments: IssueComment[]): ChatCompletionRequestMessage[] => {
   return comments.length === 0
@@ -78,5 +78,5 @@ export const initComments = (comments: IssueComment[]): ChatCompletionRequestMes
                 content: unescapeComment(comment.body),
               },
         ),
-      ];
-};
+      ]
+}
